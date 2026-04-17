@@ -16,6 +16,15 @@ All paths are virtual — `/` maps to the root directory. Path traversal is bloc
 
 ## Tools
 
+### `create` — Create a file
+
+| Argument | Description |
+|----------|-------------|
+| `path` | File path |
+| `content` | File content |
+
+Creates a new file. Errors if the file already exists.
+
 ### `ls` — List directory content
 
 | Argument | Description |

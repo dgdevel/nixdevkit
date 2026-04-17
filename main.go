@@ -56,6 +56,18 @@ func main() {
 		),
 	), readHandler)
 
+	s.AddTool(mcp.NewTool("create",
+		mcp.WithDescription("Create a file"),
+		mcp.WithString("path",
+			mcp.Required(),
+			mcp.Description("File path"),
+		),
+		mcp.WithString("content",
+			mcp.Required(),
+			mcp.Description("File content"),
+		),
+	), createHandler)
+
 	s.AddTool(mcp.NewTool("edit",
 		mcp.WithDescription("Replace a file section"),
 		mcp.WithString("path",
