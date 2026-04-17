@@ -1,0 +1,130 @@
+# nixdevkit
+
+A minimal MCP server exposing Unix-inspired file tools. Designed for low token usage and sandboxed file access.
+
+## Usage
+
+```
+./nixdevkit [--stdio|--http] [--address host:port] [rootdirectory]
+```
+
+All paths are virtual — `/` maps to the root directory. Path traversal is blocked.
+
+- Default transport is stdio.
+- `--http` starts a streamable HTTP server on the given `--address` (default `localhost:8080`).
+- If no root directory is given, the current working directory is used.
+
+## Tools
+
+### `ls` — List directory content
+
+| Argument | Description |
+|----------|-------------|
+| `path` | Directory path |
+
+Returns newline-separated entries with full relative paths. Directories end with `/`.
+
+### `find` — Find files
+
+| Argument | Description |
+|----------|-------------|
+| `pattern` | Glob expression |
+
+Recursively walks the root. Supports `*` and `**` (globstar) syntax. Directories end with `/`.
+
+### `read` — Read a file
+
+| Argument | Description |
+|----------|-------------|
+| `path` | File path |
+| `line_range` | Line range `[from]:[to]`, 0-indexed |
+
+Returns file content. Use `":"` for the full file, `"1:"` from line 1 onward, `":3"` for lines 0–2. Invalid numbers default to full range.
+
+### `edit` — Replace a file section
+
+| Argument | Description |
+|----------|-------------|
+| `path` | File path |
+| `line_range` | Line range `[from]:[to]`, 0-indexed |
+| `content` | New content |
+
+Replaces the specified line range with the new content. Use `"0:0"` to prepend, empty content to delete lines.
+
+### `grep` — Print lines matching pattern
+
+| Argument | Description |
+|----------|-------------|
+| `pattern` | Regular expression |
+| `pathspec` | Glob expression for file names |
+
+Output format: `filepath:linenumber:linecontent`. Supports `**` globstar. Line numbers are 1-indexed.
+
+### `sed` — Search and replace in files
+
+| Argument | Description |
+|----------|-------------|
+| `pattern` | Regular expression |
+| `replacement` | Replacement string |
+| `pathspec` | Glob expression for file names |
+
+In-place match and replace (no capturing groups). Returns list of changed files. Supports `**` globstar.
+
+### `diff` — Compare files, output unified diff
+
+| Argument | Description |
+|----------|-------------|
+| `path1` | First file path |
+| `path2` | Second file path |
+
+Output is compatible with the `patch` tool. Returns empty string if files are identical.
+
+### `patch` — Apply a unified diff
+
+| Argument | Description |
+|----------|-------------|
+| `patch` | Unified diff to apply |
+
+Applies the diff to the target file in-place. Designed to consume output from the `diff` tool.
+
+### `rm` — Delete a file or a directory
+
+| Argument | Description |
+|----------|-------------|
+| `path` | Path to delete |
+
+Recursive delete (`rm -rf`). Returns ok for nonexistent paths.
+
+### `stat` — Various info on files and directories
+
+| Argument | Description |
+|----------|-------------|
+| `path` | File or directory path |
+
+Returns:
+
+```
+Type: [file|directory]
+Size: [bytes], [human readable]
+Permissions: [read|write|execute]
+Owner: [username](uid=[uid])
+Group: [groupname](gid=[gid])
+Access: [ISO8601 timestamp]
+Modify: [ISO8601 timestamp]
+Change: [ISO8601 timestamp]
+Birth: [ISO8601 timestamp]
+```
+
+Birth time uses `statx` when available, falls back to change time otherwise. Permissions are relative to the current user.
+
+## Build
+
+```
+go build -o nixdevkit .
+```
+
+## Test
+
+```
+go test -v ./...
+```
