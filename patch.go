@@ -33,7 +33,7 @@ func patchHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 	}
 	data, err := os.ReadFile(abs)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	fileLines := splitLines(string(data))
 
@@ -63,7 +63,7 @@ func patchHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 
 	out := strings.Join(fileLines, "\n") + "\n"
 	if err := os.WriteFile(abs, []byte(out), 0644); err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	return mcp.NewToolResultText("ok"), nil
 }

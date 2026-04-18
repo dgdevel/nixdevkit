@@ -27,7 +27,7 @@ func createHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolR
 		return mcp.NewToolResultError("file already exists"), nil
 	}
 	if err := os.WriteFile(abs, []byte(content), 0644); err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	return mcp.NewToolResultText("ok"), nil
 }

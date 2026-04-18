@@ -20,7 +20,7 @@ func lsHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResul
 	}
 	entries, err := os.ReadDir(abs)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	rel, _ := filepath.Rel(rootDir, abs)
 	names := make([]string, 0, len(entries))

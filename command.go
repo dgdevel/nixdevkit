@@ -146,7 +146,7 @@ func execCommandHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.Call
 	cmd.Stderr = &output
 
 	if err := cmd.Start(); err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("failed to start command: %v", err)), nil
+		return mcp.NewToolResultError(maskPath(fmt.Sprintf("failed to start command: %v", err))), nil
 	}
 
 	done := make(chan error, 1)

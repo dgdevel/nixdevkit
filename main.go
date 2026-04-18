@@ -169,7 +169,7 @@ func main() {
 	), availableCommandsHandler)
 
 	s.AddTool(mcp.NewTool("exec_command",
-		mcp.WithDescription("Run the command"),
+		mcp.WithDescription("Run the command from available_commands"),
 		mcp.WithString("name",
 			mcp.Required(),
 			mcp.Description("Name of the command to run"),

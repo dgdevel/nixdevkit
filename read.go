@@ -26,7 +26,7 @@ func readHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 	}
 	data, err := os.ReadFile(abs)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	lines := strings.Split(string(data), "\n")
 	from, to := parseLineRange(lineRange, len(lines))

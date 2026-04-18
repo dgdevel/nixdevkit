@@ -153,11 +153,11 @@ func diffHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 	}
 	data1, err := os.ReadFile(abs1)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	data2, err := os.ReadFile(abs2)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	if string(data1) == string(data2) {
 		return mcp.NewToolResultText(""), nil

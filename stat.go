@@ -114,7 +114,7 @@ func statHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 	}
 	var st syscall.Stat_t
 	if err := syscall.Stat(abs, &st); err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 
 	typ := "file"

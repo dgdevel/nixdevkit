@@ -23,7 +23,7 @@ func rmHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResul
 		return mcp.NewToolResultText("ok"), nil
 	}
 	if err := os.RemoveAll(abs); err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	return mcp.NewToolResultText("ok"), nil
 }

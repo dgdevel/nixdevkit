@@ -40,7 +40,7 @@ func findHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		return nil
 	})
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	if matches == nil {
 		return mcp.NewToolResultText(""), nil

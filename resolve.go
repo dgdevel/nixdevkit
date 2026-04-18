@@ -10,6 +10,15 @@ import (
 
 var rootDir string
 
+func maskPath(s string) string {
+	if rootDir == "" {
+		return s
+	}
+	s = strings.ReplaceAll(s, rootDir+string(os.PathSeparator), string(os.PathSeparator))
+	s = strings.ReplaceAll(s, rootDir, string(os.PathSeparator))
+	return s
+}
+
 func resolve(p string) (string, error) {
 	p = filepath.Clean(p)
 	if p == "." {
