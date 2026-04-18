@@ -126,10 +126,44 @@ Birth: [ISO8601 timestamp]
 
 Birth time uses `statx` when available, falls back to change time otherwise. Permissions are relative to the current user.
 
+## Configuration
+
+`nixdevkit` reads an INI-style configuration file at `[root]/.nixdevkitrc`. This file is invisible to all MCP tools — it cannot be listed, read, created, edited, or deleted through the server.
+
+The configuration is re-read on every request, so changes take effect without restarting the server.
+
+### `nixdevkit-config` — Manage the configuration file
+
+```
+./nixdevkit-config <get|set> <namespace.key> [value]
+./nixdevkit-config <root> <get|set> <namespace.key> [value]
+```
+
+Examples:
+
+```
+./nixdevkit-config set core.readonly true
+./nixdevkit-config get core.readonly
+./nixdevkit-config /path/to/project set core.readonly yes
+```
+
+### `core.readonly`
+
+When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
+
+- `create`
+- `edit`
+- `sed`
+- `patch`
+- `rm`
+
+Read-only tools (`ls`, `find`, `read`, `grep`, `diff`, `stat`) remain available.
+
 ## Build
 
 ```
 go build -o nixdevkit .
+go build -o nixdevkit-config ./cmd/nixdevkit-config/
 ```
 
 ## Test

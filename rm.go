@@ -16,6 +16,9 @@ func rmHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResul
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+	if isConfigPath(abs) {
+		return mcp.NewToolResultError("access denied"), nil
+	}
 	if _, err := os.Stat(abs); os.IsNotExist(err) {
 		return mcp.NewToolResultText("ok"), nil
 	}

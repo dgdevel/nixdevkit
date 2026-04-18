@@ -20,6 +20,9 @@ func createHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolR
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+	if isConfigPath(abs) {
+		return mcp.NewToolResultError("access denied"), nil
+	}
 	if _, err := os.Stat(abs); err == nil {
 		return mcp.NewToolResultError("file already exists"), nil
 	}

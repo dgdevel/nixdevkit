@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -26,6 +27,21 @@ func main() {
 
 	s := server.NewMCPServer("nixdevkit", "0.1.0",
 		server.WithToolCapabilities(true),
+		server.WithToolFilter(func(ctx context.Context, tools []mcp.Tool) []mcp.Tool {
+			if !isReadonly() {
+				return tools
+			}
+			hidden := map[string]bool{
+				"create": true, "edit": true, "sed": true, "patch": true, "rm": true,
+			}
+			var filtered []mcp.Tool
+			for _, t := range tools {
+				if !hidden[t.Name] {
+					filtered = append(filtered, t)
+				}
+			}
+			return filtered
+		}),
 	)
 
 	s.AddTool(mcp.NewTool("ls",

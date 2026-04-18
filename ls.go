@@ -25,6 +25,9 @@ func lsHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResul
 	rel, _ := filepath.Rel(rootDir, abs)
 	names := make([]string, 0, len(entries))
 	for _, e := range entries {
+		if isConfigPath(filepath.Join(abs, e.Name())) {
+			continue
+		}
 		n := filepath.Join(rel, e.Name())
 		if e.IsDir() {
 			n += "/"

@@ -32,6 +32,9 @@ func sedHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResu
 		if err != nil || d.IsDir() {
 			return nil
 		}
+		if isConfigPath(path) {
+			return nil
+		}
 		rel, err := filepath.Rel(rootDir, path)
 		if err != nil {
 			return nil

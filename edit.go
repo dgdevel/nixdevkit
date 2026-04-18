@@ -25,6 +25,9 @@ func editHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+	if isConfigPath(abs) {
+		return mcp.NewToolResultError("access denied"), nil
+	}
 	data, err := os.ReadFile(abs)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil

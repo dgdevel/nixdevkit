@@ -19,6 +19,9 @@ func findHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		if err != nil {
 			return nil
 		}
+		if isConfigPath(path) {
+			return nil
+		}
 		rel, err := filepath.Rel(rootDir, path)
 		if err != nil {
 			return nil

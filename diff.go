@@ -141,9 +141,15 @@ func diffHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+	if isConfigPath(abs1) {
+		return mcp.NewToolResultError("access denied"), nil
+	}
 	abs2, err := resolve(p2)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
+	}
+	if isConfigPath(abs2) {
+		return mcp.NewToolResultError("access denied"), nil
 	}
 	data1, err := os.ReadFile(abs1)
 	if err != nil {
