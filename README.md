@@ -229,12 +229,11 @@ run_arguments=target_folder, config_file
 ## Build
 
 ```
-go build -o nixdevkit .
-go build -o nixdevkit-config ./cmd/nixdevkit-config/
+make
 ```
 
 ## Test
 
 ```
-go test -v ./...
+make test
 ```
