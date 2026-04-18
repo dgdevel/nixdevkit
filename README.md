@@ -126,6 +126,35 @@ Birth: [ISO8601 timestamp]
 
 Birth time uses `statx` when available, falls back to change time otherwise. Permissions are relative to the current user.
 
+### `available_commands` — List available commands
+
+No arguments.
+
+Lists all user-defined commands from the configuration, including their descriptions and expected arguments. Example output:
+
+```
+Command: build
+Arguments: target
+
+Command: test
+Description: Run tests
+
+Command: run
+Description: Run the main executable; target_folder is the directory to work with, config_file is the reference configuration to use.
+```
+
+### `exec_command` — Run the command
+
+| Argument | Description |
+|----------|-------------|
+| `name` | Name of the command to run |
+| `arguments` | Array of strings to pass to the command line |
+| `timeout` | Timeout in seconds |
+
+Validates the command name and argument count against the configuration, sanitizes input, and executes the command. Stdout and stderr are merged and returned untouched. On timeout, the process is sent SIGTERM, then SIGKILL after 5 seconds. If a timeout occurs, the output is prefixed with `Command timed out. Partial output.`.
+
+For example, with `build_cmdline=make` and `build_arguments=target`, calling `exec_command` with `name="build"` and `arguments=["clean"]` executes `make clean`.
+
 ## Configuration
 
 `nixdevkit` reads an INI-style configuration file at `[root]/.nixdevkitrc`. This file is invisible to all MCP tools — it cannot be listed, read, created, edited, or deleted through the server.
@@ -157,7 +186,45 @@ When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 - `patch`
 - `rm`
 
-Read-only tools (`ls`, `find`, `read`, `grep`, `diff`, `stat`) remain available.
+Read-only tools (`ls`, `find`, `read`, `grep`, `diff`, `stat`, `available_commands`) remain available.
+
+### `commands` — User-defined commands
+
+The `commands` section lets you define named commands that can be listed and executed through the `available_commands` and `exec_command` tools. Each command requires a `cmdline` and can optionally have a `description` and an `arguments` list.
+
+| Key | Required | Description |
+|-----|----------|-------------|
+| `commands.list` | Yes | Comma-separated list of command names |
+| `commands.<name>_cmdline` | Yes | The command line to execute |
+| `commands.<name>_description` | No | Human-readable description of the command |
+| `commands.<name>_arguments` | No | Comma-separated list of argument names the command accepts |
+
+Example configuration:
+
+```
+./nixdevkit-config set commands.list build,test,run
+./nixdevkit-config set commands.build_cmdline "make"
+./nixdevkit-config set commands.build_arguments "target"
+./nixdevkit-config set commands.test_cmdline "make test"
+./nixdevkit-config set commands.test_description "Run tests"
+./nixdevkit-config set commands.run_cmdline "./executable"
+./nixdevkit-config set commands.run_description "Run the main executable; target_folder is the directory to work with, config_file is the reference configuration to use."
+./nixdevkit-config set commands.run_arguments "target_folder, config_file"
+```
+
+This produces the following `.nixdevkitrc`:
+
+```ini
+[commands]
+list=build,test,run
+build_cmdline=make
+build_arguments=target
+test_cmdline=make test
+test_description=Run tests
+run_cmdline=./executable
+run_description=Run the main executable; target_folder is the directory to work with, config_file is the reference configuration to use.
+run_arguments=target_folder, config_file
+```
 
 ## Build
 

@@ -164,6 +164,27 @@ func main() {
 		),
 	), statHandler)
 
+	s.AddTool(mcp.NewTool("available_commands",
+		mcp.WithDescription("List available commands"),
+	), availableCommandsHandler)
+
+	s.AddTool(mcp.NewTool("exec_command",
+		mcp.WithDescription("Run the command"),
+		mcp.WithString("name",
+			mcp.Required(),
+			mcp.Description("Name of the command to run"),
+		),
+		mcp.WithArray("arguments",
+			mcp.Required(),
+			mcp.Description("Array of strings to pass to the command line"),
+			mcp.WithStringItems(),
+		),
+		mcp.WithNumber("timeout",
+			mcp.Required(),
+			mcp.Description("Timeout in seconds"),
+		),
+	), execCommandHandler)
+
 	if *http && !*stdio {
 		srv := server.NewStreamableHTTPServer(s)
 		fmt.Fprintf(os.Stderr, "nixdevkit: HTTP on %s, root=%s\n", *addr, rootDir)
