@@ -75,6 +75,8 @@ func availableCommandsHandler(ctx context.Context, req mcp.CallToolRequest) (*mc
 				buf.WriteString(a)
 				buf.WriteString("\n")
 			}
+		} else {
+			buf.WriteString("Arguments: no arguments are taken, invoke without arguments\n")
 		}
 		if v, ok := section[descKey]; ok && v != "" {
 			buf.WriteString("Description: ")
@@ -126,6 +128,10 @@ func execCommandHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.Call
 		expectedArgs := splitCSV(expected)
 		if len(args) != len(expectedArgs) {
 			return mcp.NewToolResultError(fmt.Sprintf("command %q expects %d argument(s) (%s), got %d", name, len(expectedArgs), strings.Join(expectedArgs, ", "), len(args))), nil
+		}
+	} else {
+		if len(args) > 0 {
+			return mcp.NewToolResultError(fmt.Sprintf("command %q takes no arguments, got %d", name, len(args))), nil
 		}
 	}
 

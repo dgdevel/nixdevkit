@@ -57,6 +57,7 @@ func TestAvailableCommands(t *testing.T) {
 Arguments: target
 
 Command: test
+Arguments: no arguments are taken, invoke without arguments
 Description: Run tests
 
 Command: run
@@ -96,6 +97,7 @@ func TestExecCommand(t *testing.T) {
 		"commands": {
 			"list":          "echo_test",
 			"echo_test_cmdline": "echo",
+			"echo_test_arguments": "arg1, arg2",
 		},
 	})
 
@@ -240,6 +242,7 @@ func TestExecCommandTimeout(t *testing.T) {
 		"commands": {
 			"list":          "slow",
 			"slow_cmdline":  "sleep",
+			"slow_arguments": "duration",
 		},
 	})
 
@@ -276,6 +279,7 @@ func TestExecCommandNullByte(t *testing.T) {
 		"commands": {
 			"list":          "build",
 			"build_cmdline": "echo",
+			"build_arguments": "arg",
 		},
 	})
 
@@ -303,6 +307,7 @@ func TestExecCommandStderr(t *testing.T) {
 		"commands": {
 			"list":            "err_test",
 			"err_test_cmdline": "/bin/sh",
+			"err_test_arguments": "script",
 		},
 	})
 
