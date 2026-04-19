@@ -159,7 +159,7 @@ For example, with `build_cmdline=make` and `build_arguments=target`, calling `ex
 
 ## Configuration
 
-`nixdevkit` reads an INI-style configuration file at `[root]/.nixdevkitrc`. This file is invisible to all MCP tools — it cannot be listed, read, created, edited, or deleted through the server.
+`nixdevkit` reads an INI-style configuration file at `[root]/.nixdevkit/config.ini`. The entire `.nixdevkit` directory is invisible to all MCP tools — it cannot be listed, read, created, edited, or deleted through the server.
 
 The configuration is re-read on every request, so changes take effect without restarting the server.
 
@@ -214,7 +214,7 @@ Example configuration:
 ./nixdevkit-config set commands.run_arguments "target_folder, config_file"
 ```
 
-This produces the following `.nixdevkitrc`:
+This produces the following `.nixdevkit/config.ini`:
 
 ```ini
 [commands]

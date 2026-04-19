@@ -4,13 +4,19 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
-const FileName = ".nixdevkitrc"
+const DirName = ".nixdevkit"
+const ConfigFile = "config.ini"
+
+func DirPath(rootDir string) string {
+	return rootDir + "/" + DirName
+}
 
 func FilePath(rootDir string) string {
-	return rootDir + "/" + FileName
+	return DirPath(rootDir) + "/" + ConfigFile
 }
 
 func Read(path string) (map[string]map[string]string, error) {
@@ -53,6 +59,10 @@ func Parse(data string) map[string]map[string]string {
 }
 
 func Write(config map[string]map[string]string, path string) error {
+	dir := filepath.Dir(path) //nolint:depguard
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
 	var buf strings.Builder
 	for section, keys := range config {
 		buf.WriteString(fmt.Sprintf("[%s]\n", section))
