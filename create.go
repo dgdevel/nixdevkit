@@ -20,7 +20,7 @@ func createHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolR
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	if isConfigPath(abs) {
+	if isConfigPath(abs) || isIgnored(abs) {
 		return mcp.NewToolResultError("access denied"), nil
 	}
 	if _, err := os.Stat(abs); err == nil {

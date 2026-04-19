@@ -1,0 +1,264 @@
+package main
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"testing"
+
+	"github.com/mark3labs/mcp-go/mcp"
+)
+
+func setupIgnoreTest(t *testing.T, pattern string) {
+	t.Helper()
+	root := t.TempDir()
+	os.MkdirAll(filepath.Join(root, "node_modules", "pkg"), 0755)
+	os.WriteFile(filepath.Join(root, "node_modules", "pkg", "index.js"), []byte("js"), 0644)
+	os.WriteFile(filepath.Join(root, "app.go"), []byte("go"), 0644)
+	os.WriteFile(filepath.Join(root, "app_test.go"), []byte("test"), 0644)
+	os.MkdirAll(filepath.Join(root, ".git"), 0755)
+	os.WriteFile(filepath.Join(root, ".git", "config"), []byte("gitconfig"), 0644)
+	rootDir = root
+	if pattern != "" {
+		ignoreRe = regexp.MustCompile(pattern)
+	}
+	t.Cleanup(func() {
+		ignoreRe = nil
+	})
+}
+
+func TestIsIgnored(t *testing.T) {
+	root := t.TempDir()
+	rootDir = root
+	ignoreRe = regexp.MustCompile(`^node_modules`)
+	t.Cleanup(func() { ignoreRe = nil })
+
+	if isIgnored(filepath.Join(root, "app.go")) {
+		t.Error("app.go should not be ignored")
+	}
+	if !isIgnored(filepath.Join(root, "node_modules")) {
+		t.Error("node_modules should be ignored")
+	}
+	if !isIgnored(filepath.Join(root, "node_modules", "pkg", "index.js")) {
+		t.Error("node_modules/pkg/index.js should be ignored")
+	}
+}
+
+func TestIsIgnoredNil(t *testing.T) {
+	root := t.TempDir()
+	rootDir = root
+	ignoreRe = nil
+
+	if isIgnored(filepath.Join(root, "anything")) {
+		t.Error("nothing should be ignored when ignoreRe is nil")
+	}
+}
+
+func TestLsIgnore(t *testing.T) {
+	setupIgnoreTest(t, `^node_modules`)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "ls",
+			Arguments: map[string]interface{}{
+				"path": "/",
+			},
+		},
+	}
+	result, err := lsHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("ls returned error")
+	}
+	text := textOf(t, result)
+	if strings.Contains(text, "node_modules") {
+		t.Errorf("ls should not list ignored entries, got: %s", text)
+	}
+}
+
+func TestFindIgnoreDir(t *testing.T) {
+	setupIgnoreTest(t, `^node_modules`)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "find",
+			Arguments: map[string]interface{}{
+				"pattern": "**",
+			},
+		},
+	}
+	result, err := findHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("find returned error")
+	}
+	text := textOf(t, result)
+	if strings.Contains(text, "node_modules") {
+		t.Errorf("find should skip ignored directory and its contents, got: %s", text)
+	}
+}
+
+func TestReadIgnored(t *testing.T) {
+	setupIgnoreTest(t, `^node_modules`)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "read",
+			Arguments: map[string]interface{}{
+				"path":       "node_modules/pkg/index.js",
+				"line_range": "0:",
+			},
+		},
+	}
+	result, err := readHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error reading ignored file")
+	}
+}
+
+func TestGrepIgnore(t *testing.T) {
+	setupIgnoreTest(t, `^node_modules`)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "grep",
+			Arguments: map[string]interface{}{
+				"pattern":  "js",
+				"pathspec": "**",
+			},
+		},
+	}
+	result, err := grepHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("grep returned error")
+	}
+	text := textOf(t, result)
+	if strings.Contains(text, "node_modules") {
+		t.Errorf("grep should skip ignored files, got: %s", text)
+	}
+}
+
+func TestCreateIgnored(t *testing.T) {
+	setupIgnoreTest(t, `^\.git`)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "create",
+			Arguments: map[string]interface{}{
+				"path":    ".git/hooks/pre-commit",
+				"content": "#!/bin/sh",
+			},
+		},
+	}
+	result, err := createHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error creating file in ignored directory")
+	}
+}
+
+func TestEditIgnored(t *testing.T) {
+	setupIgnoreTest(t, `^\.git`)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "edit",
+			Arguments: map[string]interface{}{
+				"path":       ".git/config",
+				"line_range": "0:0",
+				"content":    "new",
+			},
+		},
+	}
+	result, err := editHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error editing ignored file")
+	}
+}
+
+func TestStatIgnored(t *testing.T) {
+	setupIgnoreTest(t, `^\.git`)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "stat",
+			Arguments: map[string]interface{}{
+				"path": ".git/config",
+			},
+		},
+	}
+	result, err := statHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error stating ignored file")
+	}
+}
+
+func TestRmIgnored(t *testing.T) {
+	setupIgnoreTest(t, `^\.git`)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "rm",
+			Arguments: map[string]interface{}{
+				"path": ".git/config",
+			},
+		},
+	}
+	result, err := rmHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error removing ignored file")
+	}
+}
+
+func TestDiffIgnored(t *testing.T) {
+	root := t.TempDir()
+	rootDir = root
+	ignoreRe = regexp.MustCompile(`^\.git`)
+	t.Cleanup(func() { ignoreRe = nil })
+
+	os.WriteFile(filepath.Join(root, "a.txt"), []byte("a\n"), 0644)
+	os.WriteFile(filepath.Join(root, "b.txt"), []byte("b\n"), 0644)
+	os.MkdirAll(filepath.Join(root, ".git"), 0755)
+	os.WriteFile(filepath.Join(root, ".git", "a"), []byte("a\n"), 0644)
+	os.WriteFile(filepath.Join(root, ".git", "b"), []byte("b\n"), 0644)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "diff",
+			Arguments: map[string]interface{}{
+				"path1": ".git/a",
+				"path2": ".git/b",
+			},
+		},
+	}
+	result, err := diffHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error diffing ignored files")
+	}
+}

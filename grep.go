@@ -33,6 +33,9 @@ func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		if isConfigPath(path) {
 			return nil
 		}
+		if isIgnored(path) {
+			return nil
+		}
 		rel, err := filepath.Rel(rootDir, path)
 		if err != nil {
 			return nil

@@ -4,11 +4,24 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
 var rootDir string
+var ignoreRe *regexp.Regexp
+
+func isIgnored(abs string) bool {
+	if ignoreRe == nil {
+		return false
+	}
+	rel, err := filepath.Rel(rootDir, abs)
+	if err != nil {
+		return false
+	}
+	return ignoreRe.MatchString(rel)
+}
 
 func maskPath(s string) string {
 	if rootDir == "" {

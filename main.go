@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -15,7 +16,17 @@ func main() {
 	stdio := flag.Bool("stdio", false, "use stdio transport")
 	http := flag.Bool("http", false, "use HTTP transport")
 	addr := flag.String("address", "localhost:8080", "HTTP listen address")
+	ignore := flag.String("ignore", "", "regex pattern to ignore files/directories")
 	flag.Parse()
+
+	if *ignore != "" {
+		re, err := regexp.Compile(*ignore)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "nixdevkit: invalid ignore pattern: %v\n", err)
+			os.Exit(1)
+		}
+		ignoreRe = re
+	}
 
 	args := flag.Args()
 	if len(args) > 0 {

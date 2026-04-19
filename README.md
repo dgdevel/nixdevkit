@@ -5,13 +5,14 @@ A minimal MCP server exposing Unix-inspired file tools. Designed for low token u
 ## Usage
 
 ```
-./nixdevkit [--stdio|--http] [--address host:port] [rootdirectory]
+./nixdevkit [--stdio|--http] [--address host:port] [--ignore pattern] [rootdirectory]
 ```
 
 All paths are virtual — `/` maps to the root directory. Path traversal is blocked.
 
 - Default transport is stdio.
 - `--http` starts a streamable HTTP server on the given `--address` (default `localhost:8080`).
+- `--ignore` accepts a regular expression; files and directories whose relative path matches are hidden from all tools. Traversal tools (`find`, `grep`, `sed`) skip entire matched directories.
 - If no root directory is given, the current working directory is used.
 
 ## Tools
@@ -137,6 +138,7 @@ Command: build
 Arguments: target
 
 Command: test
+Arguments: no arguments are taken, invoke without arguments
 Description: Run tests
 
 Command: run
@@ -151,7 +153,7 @@ Description: Run the main executable; target_folder is the directory to work wit
 | `arguments` | Array of strings to pass to the command line |
 | `timeout` | Timeout in seconds |
 
-Validates the command name and argument count against the configuration, sanitizes input, and executes the command. Stdout and stderr are merged and returned untouched. On timeout, the process is sent SIGTERM, then SIGKILL after 5 seconds. If a timeout occurs, the output is prefixed with `Command timed out. Partial output.`.
+Validates the command name and argument count against the configuration, sanitizes input, and executes the command. Arguments are only accepted when the command defines an `arguments` list; passing arguments to a command that takes none is an error. Stdout and stderr are merged and returned untouched. On timeout, the process is sent SIGTERM, then SIGKILL after 5 seconds. If a timeout occurs, the output is prefixed with `Command timed out. Partial output.`.
 
 For example, with `build_cmdline=make` and `build_arguments=target`, calling `exec_command` with `name="build"` and `arguments=["clean"]` executes `make clean`.
 
