@@ -175,6 +175,45 @@ func main() {
 		),
 	), statHandler)
 
+	s.AddTool(mcp.NewTool("tasks_list",
+		mcp.WithDescription("List of tasks prefixed by ID and state ([ ] created, [_] in progress, [X] completed)"),
+	), tasksListHandler)
+
+	s.AddTool(mcp.NewTool("tasks_create",
+		mcp.WithDescription("Append a task to the task list"),
+		mcp.WithString("description",
+			mcp.Required(),
+			mcp.Description("Task description"),
+		),
+		mcp.WithString("parent",
+			mcp.Description("ID of the parent task, optional"),
+		),
+	), tasksCreateHandler)
+
+	s.AddTool(mcp.NewTool("tasks_set_status",
+		mcp.WithDescription("Change status of a task"),
+		mcp.WithString("ID",
+			mcp.Required(),
+			mcp.Description("Task ID"),
+		),
+		mcp.WithString("status",
+			mcp.Required(),
+			mcp.Description("One of: created, in_progress, completed"),
+		),
+	), tasksSetStatusHandler)
+
+	s.AddTool(mcp.NewTool("tasks_delete",
+		mcp.WithDescription("Delete a task"),
+		mcp.WithString("ID",
+			mcp.Required(),
+			mcp.Description("Task ID"),
+		),
+	), tasksDeleteHandler)
+
+	s.AddTool(mcp.NewTool("tasks_clear",
+		mcp.WithDescription("Clear all tasks"),
+	), tasksClearHandler)
+
 	s.AddTool(mcp.NewTool("available_commands",
 		mcp.WithDescription("List available commands"),
 	), availableCommandsHandler)

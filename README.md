@@ -157,6 +157,62 @@ Validates the command name and argument count against the configuration, sanitiz
 
 For example, with `build_cmdline=make` and `build_arguments=target`, calling `exec_command` with `name="build"` and `arguments=["clean"]` executes `make clean`.
 
+## Task Management
+
+Tasks are stored in `[root]/.nixdevkit/tasks.txt`. Each task has a system-assigned hierarchical ID, a status, and a description.
+
+Status markers:
+
+| Status | Marker |
+|--------|--------|
+| `created` | `[ ]` |
+| `in_progress` | `[_]` |
+| `completed` | `[X]` |
+
+Example file content:
+
+```
+1. [X] Design the API
+2. [_] Implement features
+2.1 [X] Add config loading
+2.2 [ ] Add error handling
+3. [ ] Write documentation
+```
+
+### `tasks_list` — List all tasks
+
+No arguments.
+
+Returns the content of the tasks file.
+
+### `tasks_create` — Append a task to the task list
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `description` | Yes | Task description |
+| `parent` | No | ID of the parent task |
+
+Returns the assigned ID in the format `ID: $ID`. When `parent` is provided, the new task becomes a child (e.g. `parent="2"` → new ID `2.1`).
+
+### `tasks_set_status` — Change status of a task
+
+| Argument | Description |
+|----------|-------------|
+| `ID` | Task ID |
+| `status` | One of: `created`, `in_progress`, `completed` |
+
+### `tasks_delete` — Delete a task
+
+| Argument | Description |
+|----------|-------------|
+| `ID` | Task ID |
+
+Deletes the task and all its children.
+
+### `tasks_clear` — Clear all tasks
+
+No arguments.
+
 ## Configuration
 
 `nixdevkit` reads an INI-style configuration file at `[root]/.nixdevkit/config.ini`. The entire `.nixdevkit` directory is invisible to all MCP tools — it cannot be listed, read, created, edited, or deleted through the server.
