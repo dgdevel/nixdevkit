@@ -222,6 +222,14 @@ func main() {
 		),
 	), w3mdumpHandler)
 
+	s.AddTool(mcp.NewTool("online_search",
+		mcp.WithDescription("Search topic online"),
+		mcp.WithString("search_query",
+			mcp.Required(),
+			mcp.Description("Search query string"),
+		),
+	), onlineSearchHandler)
+
 	s.AddTool(mcp.NewTool("available_commands",
 		mcp.WithDescription("List available commands"),
 	), availableCommandsHandler)

@@ -135,6 +135,27 @@ Birth time uses `statx` when available, falls back to change time otherwise. Per
 
 Fetches a webpage, extracts the main readable content using Mozilla Readability, and converts it to Markdown. Only `http` and `https` URLs are supported. Connect timeout is 5 seconds, read timeout is 20 seconds. Response body is limited to 5 MB. If the resulting Markdown exceeds 200 KB, it is truncated and prefixed with `# PAGE TOO LONG - PARTIAL OUTPUT`.
 
+### `online_search` — Search topic online
+
+| Argument | Description |
+|----------|-------------|
+| `search_query` | Search query string |
+
+Searches DuckDuckGo and returns results with title, URL, and description. Returns `No results found` if nothing matches. Example output:
+
+```
+Title: This is a page
+Url: http://....
+Description:
+The page is about being
+a page. The description text can be
+multiline.
+
+Title: This is another page
+Url: http://....
+Description: A short description
+```
+
 ### `available_commands` — List available commands
 
 No arguments.
@@ -252,7 +273,7 @@ When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 - `patch`
 - `rm`
 
-Read-only tools (`ls`, `find`, `read`, `grep`, `diff`, `stat`, `w3m-dump`, `available_commands`) remain available.
+Read-only tools (`ls`, `find`, `read`, `grep`, `diff`, `stat`, `w3m-dump`, `online_search`, `available_commands`) remain available.
 
 ### `commands` — User-defined commands
 
