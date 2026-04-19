@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -25,6 +26,9 @@ func createHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolR
 	}
 	if _, err := os.Stat(abs); err == nil {
 		return mcp.NewToolResultError("file already exists"), nil
+	}
+	if err := os.MkdirAll(filepath.Dir(abs), 0755); err != nil {
+		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 	if err := os.WriteFile(abs, []byte(content), 0644); err != nil {
 		return mcp.NewToolResultError(maskPath(err.Error())), nil

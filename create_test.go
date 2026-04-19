@@ -100,3 +100,28 @@ func TestCreateNested(t *testing.T) {
 		t.Errorf("create nested: got %q, want %q", string(data), "nested")
 	}
 }
+
+func TestCreateMkdirAll(t *testing.T) {
+	root := setupTestRoot(t)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "create",
+			Arguments: map[string]interface{}{
+				"path":    "/a/b/c/deep.txt",
+				"content": "deep",
+			},
+		},
+	}
+	result, err := createHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("create returned error")
+	}
+	data, _ := os.ReadFile(filepath.Join(root, "a", "b", "c", "deep.txt"))
+	if string(data) != "deep" {
+		t.Errorf("create mkdirall: got %q, want %q", string(data), "deep")
+	}
+}

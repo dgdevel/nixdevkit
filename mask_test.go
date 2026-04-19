@@ -95,7 +95,7 @@ func TestCreateErrorMasksPath(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "create",
 			Arguments: map[string]interface{}{
-				"path":    "/nonexistent_dir/file.txt",
+				"path":    "/file1.txt/nested/file.txt",
 				"content": "data",
 			},
 		},
