@@ -214,6 +214,14 @@ func main() {
 		mcp.WithDescription("Clear all tasks"),
 	), tasksClearHandler)
 
+	s.AddTool(mcp.NewTool("w3m-dump",
+		mcp.WithDescription("Fetch a webpage text"),
+		mcp.WithString("url",
+			mcp.Required(),
+			mcp.Description("URL to fetch"),
+		),
+	), w3mdumpHandler)
+
 	s.AddTool(mcp.NewTool("available_commands",
 		mcp.WithDescription("List available commands"),
 	), availableCommandsHandler)

@@ -127,6 +127,14 @@ Birth: [ISO8601 timestamp]
 
 Birth time uses `statx` when available, falls back to change time otherwise. Permissions are relative to the current user.
 
+### `w3m-dump` — Fetch a webpage text
+
+| Argument | Description |
+|----------|-------------|
+| `url` | URL to fetch |
+
+Fetches a webpage, extracts the main readable content using Mozilla Readability, and converts it to Markdown. Only `http` and `https` URLs are supported. Connect timeout is 5 seconds, read timeout is 20 seconds. Response body is limited to 5 MB. If the resulting Markdown exceeds 200 KB, it is truncated and prefixed with `# PAGE TOO LONG - PARTIAL OUTPUT`.
+
 ### `available_commands` — List available commands
 
 No arguments.
@@ -244,7 +252,7 @@ When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 - `patch`
 - `rm`
 
-Read-only tools (`ls`, `find`, `read`, `grep`, `diff`, `stat`, `available_commands`) remain available.
+Read-only tools (`ls`, `find`, `read`, `grep`, `diff`, `stat`, `w3m-dump`, `available_commands`) remain available.
 
 ### `commands` — User-defined commands
 
