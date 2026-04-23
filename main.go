@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"nixdevkit/internal/mcps"
+
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -250,6 +252,19 @@ func main() {
 			mcp.Description("Timeout in seconds"),
 		),
 	), execCommandHandler)
+
+	mcpsCfg, err := mcps.LoadConfig(mcps.ConfigPath(rootDir))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "nixdevkit: mcps config: %v\n", err)
+		os.Exit(1)
+	}
+	if mcpsCfg != nil {
+		if err := mcps.RegisterProxiedTools(context.Background(), s, mcpsCfg); err != nil {
+			fmt.Fprintf(os.Stderr, "nixdevkit: mcps: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(os.Stderr, "nixdevkit: loaded %d upstream MCP servers\n", len(mcpsCfg.MCPS))
+	}
 
 	if *http && !*stdio {
 		srv := server.NewStreamableHTTPServer(s)

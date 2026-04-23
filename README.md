@@ -313,6 +313,36 @@ run_description=Run the main executable; target_folder is the directory to work 
 run_arguments=target_folder, config_file
 ```
 
+### MCP Proxy — Upstream tool remapping
+
+`nixdevkit` can proxy tools from upstream MCP streamable-HTTP servers, letting you selectively expose tools with overridden descriptions. Configuration lives in `[root]/.nixdevkit/mcps.yml`.
+
+Only tools explicitly listed in the config are exposed. Tools not listed are hidden entirely.
+
+```yaml
+mcps:
+  deepwiki:
+    url: https://mcp.deepwiki.com/mcp
+    tools:
+      read_wiki_structure:
+        description: "Ask any question about a GitHub repository and get an AI-powered, context-grounded response."
+        arguments:
+          repoName: "GitHub repository in owner/repo format"
+          question: "The question to ask about the repository"
+      ask_question:
+        keep_as_is: true
+```
+
+| Field | Description |
+|-------|-------------|
+| `url` | Streamable-HTTP endpoint of the upstream MCP server |
+| `tools` | Map of tool names to their config. Omitted tools are hidden. |
+| `tools.<name>.description` | Override the tool's description |
+| `tools.<name>.arguments` | Map of argument names to new descriptions |
+| `tools.<name>.keep_as_is` | Pass the tool through unchanged (no description rewriting) |
+
+Upstream connections are established at startup. If any upstream server is unreachable, `nixdevkit` exits with an error.
+
 ## Build
 
 ```
