@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/mark3labs/mcp-go/client"
+	"github.com/mark3labs/mcp-go/client/transport"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"gopkg.in/yaml.v3"
@@ -17,14 +18,21 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	URL   string                `yaml:"url"`
-	Tools map[string]ToolConfig `yaml:"tools"`
+	URL     string                `yaml:"url"`
+	Headers map[string]string     `yaml:"headers,omitempty"`
+	Tools   map[string]ToolConfig `yaml:"tools"`
 }
 
 type ToolConfig struct {
-	Description string            `yaml:"description,omitempty"`
-	Arguments   map[string]string `yaml:"arguments,omitempty"`
-	KeepAsIs    bool              `yaml:"keep_as_is,omitempty"`
+	Rename      string                   `yaml:"rename,omitempty"`
+	Description string                   `yaml:"description,omitempty"`
+	Arguments   map[string]ArgumentConfig `yaml:"arguments,omitempty"`
+	KeepAsIs    bool                     `yaml:"keep_as_is,omitempty"`
+}
+
+type ArgumentConfig struct {
+	Rename      string `yaml:"rename,omitempty"`
+	Description string `yaml:"description,omitempty"`
 }
 
 func ConfigPath(rootDir string) string {
@@ -56,7 +64,11 @@ func RegisterProxiedTools(ctx context.Context, srv *server.MCPServer, cfg *Confi
 }
 
 func registerUpstream(ctx context.Context, srv *server.MCPServer, name string, scfg ServerConfig) error {
-	c, err := client.NewStreamableHttpClient(scfg.URL)
+	var opts []transport.StreamableHTTPCOption
+	if len(scfg.Headers) > 0 {
+		opts = append(opts, transport.WithHTTPHeaders(scfg.Headers))
+	}
+	c, err := client.NewStreamableHttpClient(scfg.URL, opts...)
 	if err != nil {
 		return fmt.Errorf("connect upstream %s: %w", name, err)
 	}
@@ -87,17 +99,33 @@ func registerUpstream(ctx context.Context, srv *server.MCPServer, name string, s
 		}
 
 		proxyTool := tool
+		upstreamName := tool.Name
+		renameMap := map[string]string{}
+
 		if !tcfg.KeepAsIs {
+			if tcfg.Rename != "" {
+				proxyTool.Name = tcfg.Rename
+			}
 			if tcfg.Description != "" {
 				proxyTool.Description = tcfg.Description
 			}
-			for argName, desc := range tcfg.Arguments {
-				setArgDescription(&proxyTool, argName, desc)
+			for argName, acfg := range tcfg.Arguments {
+				if acfg.Description != "" {
+					setArgDescription(&proxyTool, argName, acfg.Description)
+				}
+				if acfg.Rename != "" {
+					renameMap[argName] = acfg.Rename
+				}
+			}
+			if len(renameMap) > 0 {
+				renameArgs(&proxyTool, renameMap)
 			}
 		}
 
 		cl := c
 		srv.AddTool(proxyTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			req.Params.Name = upstreamName
+			reverseRenameArgs(&req, renameMap)
 			return cl.CallTool(ctx, req)
 		})
 	}
@@ -127,5 +155,41 @@ func setArgDescription(tool *mcp.Tool, argName, desc string) {
 		}
 		m["description"] = desc
 		props[argName] = m
+	}
+}
+
+func renameArgs(tool *mcp.Tool, renameMap map[string]string) {
+	props := tool.InputSchema.Properties
+	if props == nil {
+		return
+	}
+	for oldName, newName := range renameMap {
+		prop, ok := props[oldName]
+		if !ok {
+			continue
+		}
+		delete(props, oldName)
+		props[newName] = prop
+	}
+	for i, r := range tool.InputSchema.Required {
+		if newName, ok := renameMap[r]; ok {
+			tool.InputSchema.Required[i] = newName
+		}
+	}
+}
+
+func reverseRenameArgs(req *mcp.CallToolRequest, renameMap map[string]string) {
+	if req.Params.Arguments == nil || len(renameMap) == 0 {
+		return
+	}
+	args, ok := req.Params.Arguments.(map[string]any)
+	if !ok {
+		return
+	}
+	for oldName, newName := range renameMap {
+		if v, exists := args[newName]; exists {
+			delete(args, newName)
+			args[oldName] = v
+		}
 	}
 }

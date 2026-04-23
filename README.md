@@ -315,31 +315,53 @@ run_arguments=target_folder, config_file
 
 ### MCP Proxy — Upstream tool remapping
 
-`nixdevkit` can proxy tools from upstream MCP streamable-HTTP servers, letting you selectively expose tools with overridden descriptions. Configuration lives in `[root]/.nixdevkit/mcps.yml`.
+`nixdevkit` can proxy tools from upstream MCP streamable-HTTP servers, letting you selectively expose tools with overridden descriptions and renamed tools/arguments. Configuration lives in `[root]/.nixdevkit/mcps.yml`.
 
 Only tools explicitly listed in the config are exposed. Tools not listed are hidden entirely.
 
 ```yaml
 mcps:
-  deepwiki:
-    url: https://mcp.deepwiki.com/mcp
+  context7:
+    url: https://mcp.context7.com/mcp
+    headers:
+      Authorization: "Bearer <token>"
     tools:
-      read_wiki_structure:
-        description: "Ask any question about a GitHub repository and get an AI-powered, context-grounded response."
+      get-library-docs:
+        rename: search_docs
+        description: "Search documentation for a library."
         arguments:
-          repoName: "GitHub repository in owner/repo format"
-          question: "The question to ask about the repository"
-      ask_question:
+          libraryId:
+            description: "Library ID to query"
+            rename: library
+          tokens:
+            keep_as_is: true
+      resolve-library-id:
         keep_as_is: true
 ```
+
+**Server fields:**
 
 | Field | Description |
 |-------|-------------|
 | `url` | Streamable-HTTP endpoint of the upstream MCP server |
-| `tools` | Map of tool names to their config. Omitted tools are hidden. |
-| `tools.<name>.description` | Override the tool's description |
-| `tools.<name>.arguments` | Map of argument names to new descriptions |
-| `tools.<name>.keep_as_is` | Pass the tool through unchanged (no description rewriting) |
+| `headers` | Optional HTTP headers sent with every request (e.g. `Authorization: "Bearer <token>"`) |
+| `tools` | Map of upstream tool names to their config. Omitted tools are hidden. |
+
+**Tool fields:**
+
+| Field | Description |
+|-------|-------------|
+| `description` | Override the tool's description |
+| `rename` | Expose the tool under a different name |
+| `arguments` | Map of upstream argument names to their config |
+| `keep_as_is` | Pass the tool through unchanged (no description/renaming) |
+
+**Argument fields:**
+
+| Field | Description |
+|-------|-------------|
+| `description` | Override the argument's description |
+| `rename` | Expose the argument under a different name (renamed back before forwarding) |
 
 Upstream connections are established at startup. If any upstream server is unreachable, `nixdevkit` exits with an error.
 
