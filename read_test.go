@@ -105,7 +105,7 @@ func TestReadLineRangeFrom(t *testing.T) {
 			Name: "read",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
-				"line_range": "1:",
+				"line_range": "2:",
 			},
 		},
 	}
@@ -117,7 +117,7 @@ func TestReadLineRangeFrom(t *testing.T) {
 		t.Fatal("read returned error")
 	}
 	if textOf(t, result) != "world\nfoo" {
-		t.Errorf("read 1:: got %q, want %q", textOf(t, result), "world\nfoo")
+		t.Errorf("read 2:: got %q, want %q", textOf(t, result), "world\nfoo")
 	}
 }
 
@@ -153,7 +153,7 @@ func TestReadLineRangeBoth(t *testing.T) {
 			Name: "read",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
-				"line_range": "1:2",
+				"line_range": "2:2",
 			},
 		},
 	}
@@ -165,7 +165,7 @@ func TestReadLineRangeBoth(t *testing.T) {
 		t.Fatal("read returned error")
 	}
 	if textOf(t, result) != "world" {
-		t.Errorf("read 1:2: got %q, want %q", textOf(t, result), "world")
+		t.Errorf("read 2:2: got %q, want %q", textOf(t, result), "world")
 	}
 }
 
@@ -201,7 +201,7 @@ func TestReadLineRangeOverflow(t *testing.T) {
 			Name: "read",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
-				"line_range": "0:999",
+				"line_range": "1:999",
 			},
 		},
 	}
@@ -213,6 +213,6 @@ func TestReadLineRangeOverflow(t *testing.T) {
 		t.Fatal("read returned error")
 	}
 	if textOf(t, result) != "hello\nworld\nfoo" {
-		t.Errorf("read 0:999: got %q, want full content", textOf(t, result))
+		t.Errorf("read 1:999: got %q, want full content", textOf(t, result))
 	}
 }

@@ -47,16 +47,16 @@ Recursively walks the root. Supports `*` and `**` (globstar) syntax. Directories
 | Argument | Description |
 |----------|-------------|
 | `path` | File path |
-| `line_range` | Line range `[from]:[to]`, 0-indexed |
+| `line_range` | Line range `[from]:[to]`, 1-indexed |
 
-Returns file content. Use `":"` for the full file, `"1:"` from line 1 onward, `":3"` for lines 0–2. Invalid numbers default to full range.
+Returns file content. Use `":"` for the full file, `"2:"` from line 2 onward, `":3"` for lines 1–3. Invalid numbers default to full range.
 
 ### `edit` — Replace a file section
 
 | Argument | Description |
 |----------|-------------|
 | `path` | File path |
-| `line_range` | Line range `[from]:[to]`, 0-indexed |
+| `line_range` | Line range `[from]:[to]`, 1-indexed |
 | `content` | New content |
 
 Replaces the specified line range with the new content. Use `"0:0"` to prepend, empty content to delete lines.

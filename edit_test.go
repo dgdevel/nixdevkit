@@ -17,7 +17,7 @@ func TestEditReplaceMiddle(t *testing.T) {
 			Name: "edit",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
-				"line_range": "1:2",
+				"line_range": "2:2",
 				"content":    "REPLACED",
 			},
 		},
@@ -43,7 +43,7 @@ func TestEditDelete(t *testing.T) {
 			Name: "edit",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
-				"line_range": "1:3",
+				"line_range": "2:3",
 				"content":    "",
 			},
 		},
@@ -95,7 +95,7 @@ func TestEditMultiline(t *testing.T) {
 			Name: "edit",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
-				"line_range": "1:2",
+				"line_range": "2:2",
 				"content":    "a\nb\nc",
 			},
 		},

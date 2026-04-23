@@ -87,7 +87,9 @@ func parseLineRange(s string, total int) (int, int) {
 	to := total
 	if parts[0] != "" {
 		if v, err := strconv.Atoi(parts[0]); err == nil && v >= 0 {
-			from = v
+			if v > 0 {
+				from = v - 1
+			}
 		}
 	}
 	if len(parts) > 1 && parts[1] != "" {
