@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"nixdevkit/internal/mcps"
 
@@ -15,14 +16,32 @@ import (
 )
 
 func main() {
-	stdio := flag.Bool("stdio", false, "use stdio transport")
-	http := flag.Bool("http", false, "use HTTP transport")
-	addr := flag.String("address", "localhost:8080", "HTTP listen address")
-	ignore := flag.String("ignore", "", "regex pattern to ignore files/directories")
-	flag.Parse()
+	var (
+		stdio     bool
+		http      bool
+		addr      string
+		ignore    string
+		showTools string
+		hideTools string
+	)
+	{
+		stdioF := flag.Bool("stdio", false, "use stdio transport")
+		httpF := flag.Bool("http", false, "use HTTP transport")
+		addrF := flag.String("address", "localhost:8080", "HTTP listen address")
+		ignoreF := flag.String("ignore", "", "regex pattern to ignore files/directories")
+		showF := flag.String("show", "", "comma-separated whitelist of tool names (mutually exclusive with -hide)")
+		hideF := flag.String("hide", "", "comma-separated blacklist of tool names (mutually exclusive with -show)")
+		flag.Parse()
+		stdio, http, addr, ignore, showTools, hideTools = *stdioF, *httpF, *addrF, *ignoreF, *showF, *hideF
+	}
 
-	if *ignore != "" {
-		re, err := regexp.Compile(*ignore)
+	if showTools != "" && hideTools != "" {
+		fmt.Fprintln(os.Stderr, "nixdevkit: --show and --hide are mutually exclusive")
+		os.Exit(1)
+	}
+
+	if ignore != "" {
+		re, err := regexp.Compile(ignore)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "nixdevkit: invalid ignore pattern: %v\n", err)
 			os.Exit(1)
@@ -37,20 +56,47 @@ func main() {
 		rootDir, _ = os.Getwd()
 	}
 	rootDir, _ = filepath.Abs(rootDir)
+
+	proxiedTools := map[string]bool{}
+
 	s := server.NewMCPServer("nixdevkit", "0.1.0",
 		server.WithToolCapabilities(true),
 		server.WithToolFilter(func(ctx context.Context, tools []mcp.Tool) []mcp.Tool {
-			if !isReadonly() {
-				return tools
-			}
-			hidden := map[string]bool{
+			readonlyHidden := map[string]bool{
 				"create": true, "replace_range": true, "sed": true, "patch": true, "rm": true, "mv": true,
 			}
+
+			var showSet map[string]bool
+			var hideSet map[string]bool
+			if showTools != "" {
+				showSet = make(map[string]bool)
+				for _, n := range strings.Split(showTools, ",") {
+					showSet[strings.TrimSpace(n)] = true
+				}
+			}
+			if hideTools != "" {
+				hideSet = make(map[string]bool)
+				for _, n := range strings.Split(hideTools, ",") {
+					hideSet[strings.TrimSpace(n)] = true
+				}
+			}
+
 			var filtered []mcp.Tool
 			for _, t := range tools {
-				if !hidden[t.Name] {
+				if proxiedTools[t.Name] {
 					filtered = append(filtered, t)
+					continue
 				}
+				if isReadonly() && readonlyHidden[t.Name] {
+					continue
+				}
+				if showSet != nil && !showSet[t.Name] {
+					continue
+				}
+				if hideSet != nil && hideSet[t.Name] {
+					continue
+				}
+				filtered = append(filtered, t)
 			}
 			return filtered
 		}),
@@ -270,22 +316,25 @@ func main() {
 		os.Exit(1)
 	}
 	if mcpsCfg != nil {
-		if err := mcps.RegisterProxiedTools(context.Background(), s, mcpsCfg); err != nil {
+		proxiedNames, err := mcps.RegisterProxiedTools(context.Background(), s, mcpsCfg)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "nixdevkit: mcps: %v\n", err)
 			os.Exit(1)
+		}
+		for _, n := range proxiedNames {
+			proxiedTools[n] = true
 		}
 		fmt.Fprintf(os.Stderr, "nixdevkit: loaded %d upstream MCP servers\n", len(mcpsCfg.MCPS))
 	}
 
-	if *http && !*stdio {
+	if http && !stdio {
 		srv := server.NewStreamableHTTPServer(s)
-		fmt.Fprintf(os.Stderr, "nixdevkit: HTTP on %s, root=%s\n", *addr, rootDir)
-		if err := srv.Start(*addr); err != nil {
+		fmt.Fprintf(os.Stderr, "nixdevkit: HTTP on %s, root=%s\n", addr, rootDir)
+		if err := srv.Start(addr); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 	} else {
-		_ = stdio
 		if err := server.ServeStdio(s); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)

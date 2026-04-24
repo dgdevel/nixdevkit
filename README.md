@@ -5,7 +5,7 @@ A minimal MCP server exposing Unix-inspired file tools. Designed for low token u
 ## Usage
 
 ```
-./nixdevkit [--stdio|--http] [--address host:port] [--ignore pattern] [rootdirectory]
+./nixdevkit [--stdio|--http] [--address host:port] [--ignore pattern] [--show tools] [--hide tools] [rootdirectory]
 ```
 
 All paths are virtual — `/` maps to the root directory. Path traversal is blocked.
@@ -13,6 +13,8 @@ All paths are virtual — `/` maps to the root directory. Path traversal is bloc
 - Default transport is stdio.
 - `--http` starts a streamable HTTP server on the given `--address` (default `localhost:8080`).
 - `--ignore` accepts a regular expression; files and directories whose relative path matches are hidden from all tools. Traversal tools (`find`, `grep`, `sed`) skip entire matched directories.
+- `--show` accepts a comma-separated list of tool names to expose (whitelist). Only the listed tools are available. Mutually exclusive with `--hide`. Proxied tools (from `mcps.yml`) are always included regardless of this flag.
+- `--hide` accepts a comma-separated list of tool names to hide (blacklist). All other tools remain available. Mutually exclusive with `--show`. Proxied tools are always included regardless of this flag.
 - If no root directory is given, the current working directory is used.
 
 ## Tools
@@ -61,6 +63,15 @@ Returns file content. Use `":"` for the full file, `"2:"` from line 2 onward, `"
 
 Replaces the specified line range with the new content. Use `"0:0"` to prepend, empty content to delete lines.
 
+### `mv` — Move files
+
+| Argument | Description |
+|----------|-------------|
+| `source` | File path |
+| `dest` | File path |
+
+Moves a file or directory. Fails if destination already exists or source not found.
+
 ### `grep` — Print lines matching pattern
 
 | Argument | Description |
@@ -104,15 +115,6 @@ Applies the diff to the target file in-place. Designed to consume output from th
 | `path` | Path to delete |
 
 Recursive delete (`rm -rf`). Returns ok for nonexistent paths.
-
-### `mv` — Move files
-
-| Argument | Description |
-|----------|-------------|
-| `source` | File path |
-| `dest` | File path |
-
-Moves a file or directory. Fails if destination already exists or source not found.
 
 ### `stat` — Various info on files and directories
 
@@ -305,3 +307,43 @@ Example configuration:
 ./nixdevkit-config set commands.test_cmdline "make test"
 ./nixdevkit-config set commands.test_description "Run tests"
 ```
+
+### `mcps` — Upstream MCP server proxying
+
+`nixdevkit` can proxy tools from upstream MCP servers, making them available as if they were built-in. Configuration lives in `[root]/.nixdevkit/mcps.yml`.
+
+```yaml
+mcps:
+  myserver:
+    url: http://localhost:9001/mcp
+    headers:
+      Authorization: Bearer token123
+    tools:
+      search:
+        rename: my_search
+        description: Search my database
+        arguments:
+          query:
+            description: The search query
+      get_item:
+        keep_as_is: true
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `mcps.<name>.url` | Yes | URL of the upstream MCP server (streamable HTTP transport) |
+| `mcps.<name>.headers` | No | HTTP headers to send with each request |
+| `mcps.<name>.tools` | Yes | Map of upstream tool names to their configuration |
+
+For each tool entry:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `rename` | No | New name for the proxied tool |
+| `description` | No | Override the tool description |
+| `arguments` | No | Map of argument names to `{rename, description}` overrides |
+| `keep_as_is` | No | If `true`, pass the tool through unchanged (no rename/description overrides) |
+
+Only tools explicitly listed in the `tools` map are proxied. Other tools from the upstream server are ignored.
+
+Proxied tools are excluded from `--show`/`--hide` filtering — they are always visible.

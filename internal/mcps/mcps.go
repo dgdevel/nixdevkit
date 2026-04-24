@@ -54,26 +54,29 @@ func LoadConfig(path string) (*Config, error) {
 	return &cfg, nil
 }
 
-func RegisterProxiedTools(ctx context.Context, srv *server.MCPServer, cfg *Config) error {
+func RegisterProxiedTools(ctx context.Context, srv *server.MCPServer, cfg *Config) ([]string, error) {
+	var names []string
 	for name, scfg := range cfg.MCPS {
-		if err := registerUpstream(ctx, srv, name, scfg); err != nil {
-			return err
+		registered, err := registerUpstream(ctx, srv, name, scfg)
+		if err != nil {
+			return nil, err
 		}
+		names = append(names, registered...)
 	}
-	return nil
+	return names, nil
 }
 
-func registerUpstream(ctx context.Context, srv *server.MCPServer, name string, scfg ServerConfig) error {
+func registerUpstream(ctx context.Context, srv *server.MCPServer, name string, scfg ServerConfig) ([]string, error) {
 	var opts []transport.StreamableHTTPCOption
 	if len(scfg.Headers) > 0 {
 		opts = append(opts, transport.WithHTTPHeaders(scfg.Headers))
 	}
 	c, err := client.NewStreamableHttpClient(scfg.URL, opts...)
 	if err != nil {
-		return fmt.Errorf("connect upstream %s: %w", name, err)
+		return nil, fmt.Errorf("connect upstream %s: %w", name, err)
 	}
 	if err := c.Start(ctx); err != nil {
-		return fmt.Errorf("start upstream %s: %w", name, err)
+		return nil, fmt.Errorf("start upstream %s: %w", name, err)
 	}
 	if _, err := c.Initialize(ctx, mcp.InitializeRequest{
 		Params: mcp.InitializeParams{
@@ -84,14 +87,15 @@ func registerUpstream(ctx context.Context, srv *server.MCPServer, name string, s
 			},
 		},
 	}); err != nil {
-		return fmt.Errorf("initialize upstream %s: %w", name, err)
+		return nil, fmt.Errorf("initialize upstream %s: %w", name, err)
 	}
 
 	toolsResult, err := c.ListTools(ctx, mcp.ListToolsRequest{})
 	if err != nil {
-		return fmt.Errorf("list tools from %s: %w", name, err)
+		return nil, fmt.Errorf("list tools from %s: %w", name, err)
 	}
 
+	var registered []string
 	for _, tool := range toolsResult.Tools {
 		tcfg, ok := scfg.Tools[tool.Name]
 		if !ok {
@@ -122,6 +126,7 @@ func registerUpstream(ctx context.Context, srv *server.MCPServer, name string, s
 			}
 		}
 
+		registered = append(registered, proxyTool.Name)
 		cl := c
 		srv.AddTool(proxyTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			req.Params.Name = upstreamName
@@ -129,7 +134,7 @@ func registerUpstream(ctx context.Context, srv *server.MCPServer, name string, s
 			return cl.CallTool(ctx, req)
 		})
 	}
-	return nil
+	return registered, nil
 }
 
 func setArgDescription(tool *mcp.Tool, argName, desc string) {
