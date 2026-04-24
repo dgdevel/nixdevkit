@@ -222,6 +222,18 @@ func main() {
 		),
 	), diffHandler)
 
+	s.AddTool(mcp.NewTool("diff_strings",
+		mcp.WithDescription("Unified diff from two strings"),
+		mcp.WithString("string1",
+			mcp.Required(),
+			mcp.Description("First string"),
+		),
+		mcp.WithString("string2",
+			mcp.Required(),
+			mcp.Description("Second string"),
+		),
+	), diffStringsHandler)
+
 	s.AddTool(mcp.NewTool("patch",
 		mcp.WithDescription("Apply a unified diff"),
 		mcp.WithString("patch",

@@ -109,6 +109,15 @@ In-place match and replace (no capturing groups). Returns list of changed files.
 
 Output is compatible with the `patch` tool. Returns empty string if files are identical.
 
+### `diff_strings` — Unified diff from two strings
+
+| Argument | Description |
+|----------|-------------|
+| `string1` | First string |
+| `string2` | Second string |
+
+Like `diff` but operates on raw strings instead of files. Output is compatible with the `patch` tool. Returns empty string if strings are identical.
+
 ### `patch` — Apply a unified diff
 
 | Argument | Description |
