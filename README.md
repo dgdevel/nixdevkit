@@ -53,6 +53,15 @@ Recursively walks the root. Supports `*` and `**` (globstar) syntax. Directories
 
 Returns file content. Use `":"` for the full file, `"2:"` from line 2 onward, `":3"` for lines 1–3. Invalid numbers default to full range.
 
+### `cat-b` — Read a file with line numbers
+
+| Argument | Description |
+|----------|-------------|
+| `path` | File path |
+| `line_range` | Line range `[from]:[to]`, 0-indexed |
+
+Like `cat -b`: non-empty lines are prefixed with a right-aligned line number and a tab. Empty lines are printed without a number.
+
 ### `replace_range` — Replace a file section
 
 | Argument | Description |

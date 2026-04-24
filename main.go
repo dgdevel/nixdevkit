@@ -130,6 +130,18 @@ func main() {
 		),
 	), readHandler)
 
+	s.AddTool(mcp.NewTool("cat-b",
+		mcp.WithDescription("Read a file with line numbers"),
+		mcp.WithString("path",
+			mcp.Required(),
+			mcp.Description("File path"),
+		),
+		mcp.WithString("line_range",
+			mcp.Required(),
+			mcp.Description("Line range [from]:[to], 0-indexed"),
+		),
+	), catbHandler)
+
 	s.AddTool(mcp.NewTool("create",
 		mcp.WithDescription("Create a file"),
 		mcp.WithString("path",
