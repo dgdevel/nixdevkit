@@ -148,6 +148,56 @@ func TestPatchInvalidFormat(t *testing.T) {
 	}
 }
 
+func TestPatchWithTimestamp(t *testing.T) {
+	setupTestRoot(t)
+
+	patchText := "--- /file1.txt\t2024-01-15 10:30:00.000000000 +0000\n+++ /file1.txt\t2024-01-15 10:30:00.000000000 +0000\n@@ -1,3 +1,2 @@\n hello\n-world\n foo\n"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("patch with timestamp returned error: %s", textOf(t, result))
+	}
+	data, _ := os.ReadFile(filepath.Join(rootDir, "file1.txt"))
+	if string(data) != "hello\nfoo\n" {
+		t.Errorf("patch with timestamp: got %q", string(data))
+	}
+}
+
+func TestPatchWithGitPrefixes(t *testing.T) {
+	setupTestRoot(t)
+
+	patchText := "--- a/file1.txt\n+++ b/file1.txt\n@@ -1,3 +1,2 @@\n hello\n-world\n foo\n"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("patch with git prefixes returned error: %s", textOf(t, result))
+	}
+	data, _ := os.ReadFile(filepath.Join(rootDir, "file1.txt"))
+	if string(data) != "hello\nfoo\n" {
+		t.Errorf("patch with git prefixes: got %q", string(data))
+	}
+}
+
 func TestPatchRoundTripAdded(t *testing.T) {
 	root := setupTestRoot(t)
 	os.WriteFile(filepath.Join(root, "file2.txt"), []byte("hello\nworld\nfoo\nbar"), 0644)

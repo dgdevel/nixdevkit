@@ -14,6 +14,20 @@ type hunk struct {
 	body           []string
 }
 
+func extractPatchPath(line, prefix string) string {
+	p := strings.TrimPrefix(line, prefix)
+	if idx := strings.IndexByte(p, '\t'); idx >= 0 {
+		p = p[:idx]
+	}
+	for _, pre := range []string{"a/", "b/"} {
+		if strings.HasPrefix(p, pre) {
+			p = p[len(pre)-1:]
+			break
+		}
+	}
+	return p
+}
+
 func patchHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	patch, err := req.RequireString("patch")
 	if err != nil {
@@ -23,7 +37,9 @@ func patchHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 	if len(lines) < 2 || !strings.HasPrefix(lines[0], "--- ") || !strings.HasPrefix(lines[1], "+++ ") {
 		return mcp.NewToolResultError("invalid patch format"), nil
 	}
-	path1 := strings.TrimPrefix(lines[0], "--- ")
+	path1 := extractPatchPath(lines[0], "--- ")
+	path2 := extractPatchPath(lines[1], "+++ ")
+	_ = path2
 	abs, err := resolve(path1)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
