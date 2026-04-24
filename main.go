@@ -37,7 +37,6 @@ func main() {
 		rootDir, _ = os.Getwd()
 	}
 	rootDir, _ = filepath.Abs(rootDir)
-
 	s := server.NewMCPServer("nixdevkit", "0.1.0",
 		server.WithToolCapabilities(true),
 		server.WithToolFilter(func(ctx context.Context, tools []mcp.Tool) []mcp.Tool {
@@ -45,7 +44,7 @@ func main() {
 				return tools
 			}
 			hidden := map[string]bool{
-				"create": true, "replace_range": true, "sed": true, "patch": true, "rm": true,
+				"create": true, "replace_range": true, "sed": true, "patch": true, "rm": true, "mv": true,
 			}
 			var filtered []mcp.Tool
 			for _, t := range tools {
@@ -112,6 +111,18 @@ func main() {
 			mcp.Description("New content"),
 		),
 	), replaceRangeHandler)
+
+	s.AddTool(mcp.NewTool("mv",
+		mcp.WithDescription("Move files"),
+		mcp.WithString("source",
+			mcp.Required(),
+			mcp.Description("File path"),
+		),
+		mcp.WithString("dest",
+			mcp.Required(),
+			mcp.Description("File path"),
+		),
+	), mvHandler)
 
 	s.AddTool(mcp.NewTool("grep",
 		mcp.WithDescription("Print lines matching pattern"),
