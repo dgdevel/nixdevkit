@@ -176,7 +176,7 @@ func TestEditIgnored(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "edit",
+			Name: "replace_range",
 			Arguments: map[string]interface{}{
 				"path":       ".git/config",
 				"line_range": "0:0",
@@ -184,7 +184,7 @@ func TestEditIgnored(t *testing.T) {
 			},
 		},
 	}
-	result, err := editHandler(context.Background(), req)
+	result, err := replaceRangeHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -45,7 +45,7 @@ func main() {
 				return tools
 			}
 			hidden := map[string]bool{
-				"create": true, "edit": true, "sed": true, "patch": true, "rm": true,
+				"create": true, "replace_range": true, "sed": true, "patch": true, "rm": true,
 			}
 			var filtered []mcp.Tool
 			for _, t := range tools {
@@ -97,7 +97,7 @@ func main() {
 		),
 	), createHandler)
 
-	s.AddTool(mcp.NewTool("edit",
+	s.AddTool(mcp.NewTool("replace_range",
 		mcp.WithDescription("Replace a file section"),
 		mcp.WithString("path",
 			mcp.Required(),
@@ -111,7 +111,7 @@ func main() {
 			mcp.Required(),
 			mcp.Description("New content"),
 		),
-	), editHandler)
+	), replaceRangeHandler)
 
 	s.AddTool(mcp.NewTool("grep",
 		mcp.WithDescription("Print lines matching pattern"),

@@ -108,7 +108,7 @@ func TestEditErrorMasksPath(t *testing.T) {
 	root := setupTestRoot(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "edit",
+			Name: "replace_range",
 			Arguments: map[string]interface{}{
 				"path":       "/nonexistent.txt",
 				"line_range": ":",
@@ -116,7 +116,7 @@ func TestEditErrorMasksPath(t *testing.T) {
 			},
 		},
 	}
-	result, _ := editHandler(context.Background(), req)
+	result, _ := replaceRangeHandler(context.Background(), req)
 	assertNoLeak(t, result, root)
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-func editHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func replaceRangeHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	p, err := req.RequireString("path")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil

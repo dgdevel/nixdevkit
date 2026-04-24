@@ -14,7 +14,7 @@ func TestEditReplaceMiddle(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "edit",
+			Name: "replace_range",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
 				"line_range": "2:2",
@@ -22,7 +22,7 @@ func TestEditReplaceMiddle(t *testing.T) {
 			},
 		},
 	}
-	result, err := editHandler(context.Background(), req)
+	result, err := replaceRangeHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestEditDelete(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "edit",
+			Name: "replace_range",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
 				"line_range": "2:3",
@@ -48,7 +48,7 @@ func TestEditDelete(t *testing.T) {
 			},
 		},
 	}
-	result, err := editHandler(context.Background(), req)
+	result, err := replaceRangeHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func TestEditPrepend(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "edit",
+			Name: "replace_range",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
 				"line_range": "0:0",
@@ -74,7 +74,7 @@ func TestEditPrepend(t *testing.T) {
 			},
 		},
 	}
-	result, err := editHandler(context.Background(), req)
+	result, err := replaceRangeHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func TestEditMultiline(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "edit",
+			Name: "replace_range",
 			Arguments: map[string]interface{}{
 				"path":       "/file1.txt",
 				"line_range": "2:2",
@@ -100,7 +100,7 @@ func TestEditMultiline(t *testing.T) {
 			},
 		},
 	}
-	result, err := editHandler(context.Background(), req)
+	result, err := replaceRangeHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func TestEditEscape(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "edit",
+			Name: "replace_range",
 			Arguments: map[string]interface{}{
 				"path":       "../../etc/passwd",
 				"line_range": ":",
@@ -126,7 +126,7 @@ func TestEditEscape(t *testing.T) {
 			},
 		},
 	}
-	result, err := editHandler(context.Background(), req)
+	result, err := replaceRangeHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
