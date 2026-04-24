@@ -47,16 +47,16 @@ Recursively walks the root. Supports `*` and `**` (globstar) syntax. Directories
 | Argument | Description |
 |----------|-------------|
 | `path` | File path |
-| `line_range` | Line range `[from]:[to]`, 1-indexed |
+| `line_range` | Line range `[from]:[to]`, 0-indexed |
 
 Returns file content. Use `":"` for the full file, `"2:"` from line 2 onward, `":3"` for lines 1–3. Invalid numbers default to full range.
 
-### `edit` — Replace a file section
+### `replace_range` — Replace a file section
 
 | Argument | Description |
 |----------|-------------|
 | `path` | File path |
-| `line_range` | Line range `[from]:[to]`, 1-indexed |
+| `line_range` | Line range `[from]:[to]`, 0-indexed |
 | `content` | New content |
 
 Replaces the specified line range with the new content. Use `"0:0"` to prepend, empty content to delete lines.
@@ -104,6 +104,15 @@ Applies the diff to the target file in-place. Designed to consume output from th
 | `path` | Path to delete |
 
 Recursive delete (`rm -rf`). Returns ok for nonexistent paths.
+
+### `mv` — Move files
+
+| Argument | Description |
+|----------|-------------|
+| `source` | File path |
+| `dest` | File path |
+
+Moves a file or directory. Fails if destination already exists or source not found.
 
 ### `stat` — Various info on files and directories
 
@@ -268,10 +277,11 @@ Examples:
 When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 
 - `create`
-- `edit`
+- `replace_range`
 - `sed`
 - `patch`
 - `rm`
+- `mv`
 
 Read-only tools (`ls`, `find`, `read`, `grep`, `diff`, `stat`, `w3m-dump`, `online_search`, `available_commands`) remain available.
 
@@ -294,85 +304,4 @@ Example configuration:
 ./nixdevkit-config set commands.build_arguments "target"
 ./nixdevkit-config set commands.test_cmdline "make test"
 ./nixdevkit-config set commands.test_description "Run tests"
-./nixdevkit-config set commands.run_cmdline "./executable"
-./nixdevkit-config set commands.run_description "Run the main executable; target_folder is the directory to work with, config_file is the reference configuration to use."
-./nixdevkit-config set commands.run_arguments "target_folder, config_file"
-```
-
-This produces the following `.nixdevkit/config.ini`:
-
-```ini
-[commands]
-list=build,test,run
-build_cmdline=make
-build_arguments=target
-test_cmdline=make test
-test_description=Run tests
-run_cmdline=./executable
-run_description=Run the main executable; target_folder is the directory to work with, config_file is the reference configuration to use.
-run_arguments=target_folder, config_file
-```
-
-### MCP Proxy — Upstream tool remapping
-
-`nixdevkit` can proxy tools from upstream MCP streamable-HTTP servers, letting you selectively expose tools with overridden descriptions and renamed tools/arguments. Configuration lives in `[root]/.nixdevkit/mcps.yml`.
-
-Only tools explicitly listed in the config are exposed. Tools not listed are hidden entirely.
-
-```yaml
-mcps:
-  context7:
-    url: https://mcp.context7.com/mcp
-    headers:
-      Authorization: "Bearer <token>"
-    tools:
-      get-library-docs:
-        rename: search_docs
-        description: "Search documentation for a library."
-        arguments:
-          libraryId:
-            description: "Library ID to query"
-            rename: library
-          tokens:
-            keep_as_is: true
-      resolve-library-id:
-        keep_as_is: true
-```
-
-**Server fields:**
-
-| Field | Description |
-|-------|-------------|
-| `url` | Streamable-HTTP endpoint of the upstream MCP server |
-| `headers` | Optional HTTP headers sent with every request (e.g. `Authorization: "Bearer <token>"`) |
-| `tools` | Map of upstream tool names to their config. Omitted tools are hidden. |
-
-**Tool fields:**
-
-| Field | Description |
-|-------|-------------|
-| `description` | Override the tool's description |
-| `rename` | Expose the tool under a different name |
-| `arguments` | Map of upstream argument names to their config |
-| `keep_as_is` | Pass the tool through unchanged (no description/renaming) |
-
-**Argument fields:**
-
-| Field | Description |
-|-------|-------------|
-| `description` | Override the argument's description |
-| `rename` | Expose the argument under a different name (renamed back before forwarding) |
-
-Upstream connections are established at startup. If any upstream server is unreachable, `nixdevkit` exits with an error.
-
-## Build
-
-```
-make
-```
-
-## Test
-
-```
-make test
 ```
