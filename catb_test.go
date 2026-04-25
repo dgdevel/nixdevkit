@@ -142,8 +142,8 @@ func TestCatBLimit200(t *testing.T) {
 		t.Fatal("cat-b returned error")
 	}
 	got := result.Content[0].(mcp.TextContent).Text
-	if !strings.HasPrefix(got, "Output cut at 200 lines starting from 0\n") {
-		t.Errorf("expected cut prefix, got %q", got[:60])
+	if !strings.HasPrefix(got, "Showing lines 1-200 of 300. Use line_range to read more.\n") {
+		t.Errorf("expected cut prefix, got %q", got[:80])
 	}
 	lines := strings.Count(got, "\n")
 	// 1 cut header + 200 data lines
@@ -181,7 +181,7 @@ func TestCatBLimit200WithOffset(t *testing.T) {
 		t.Fatal("cat-b returned error")
 	}
 	got := result.Content[0].(mcp.TextContent).Text
-	if !strings.HasPrefix(got, "Output cut at 200 lines starting from 49\n") {
-		t.Errorf("expected cut prefix with offset 49, got %q", got[:70])
+	if !strings.HasPrefix(got, "Showing lines 50-249 of 300. Use line_range to read more.\n") {
+		t.Errorf("expected cut prefix with offset 49, got %q", got[:80])
 	}
 }

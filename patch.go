@@ -55,8 +55,32 @@ func patchHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 
 	hunks := parseHunks(lines[2:])
 	for _, h := range hunks {
-		if h.start1 < 1 || h.start1-1+h.count1 > len(fileLines) {
-			return mcp.NewToolResultError("invalid patch: hunk references lines outside file"), nil
+		if h.start1 < 1 {
+			return mcp.NewToolResultError(fmt.Sprintf(
+				"hunk @@ -%d,%d @@ expected context at line %d but file has only %d lines -- file may have shifted after previous edits",
+				h.start1, h.count1, h.start1, len(fileLines))), nil
+		}
+		if h.start1-1+h.count1 > len(fileLines) {
+			return mcp.NewToolResultError(fmt.Sprintf(
+				"hunk @@ -%d,%d @@ expected context at line %d but file has only %d lines -- file may have shifted after previous edits",
+				h.start1, h.count1, h.start1+h.count1, len(fileLines))), nil
+		}
+		lineIdx := h.start1 - 1
+		for _, l := range h.body {
+			if len(l) == 0 {
+				continue
+			}
+			switch l[0] {
+			case ' ':
+				if fileLines[lineIdx] != l[1:] {
+					return mcp.NewToolResultError(fmt.Sprintf(
+						"hunk @@ -%d,%d @@ expected context %q at line %d but found %q -- file may have shifted after previous edits",
+						h.start1, h.count1, l[1:], lineIdx+1, fileLines[lineIdx])), nil
+				}
+				lineIdx++
+			case '-':
+				lineIdx++
+			}
 		}
 	}
 	for hi := len(hunks) - 1; hi >= 0; hi-- {

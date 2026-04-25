@@ -92,9 +92,17 @@ func runCommandHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallT
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	args, err := req.RequireStringSlice("arguments")
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+	var args []string
+	if raw, ok := req.Params.Arguments.(map[string]interface{}); ok {
+		if a, ok := raw["arguments"]; ok {
+			if arr, ok := a.([]interface{}); ok {
+				for _, v := range arr {
+					if s, ok := v.(string); ok {
+						args = append(args, s)
+					}
+				}
+			}
+		}
 	}
 	timeout, err := req.RequireInt("timeout")
 	if err != nil {

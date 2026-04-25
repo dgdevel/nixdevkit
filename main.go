@@ -304,7 +304,6 @@ func main() {
 			mcp.Description("Name of the command to run"),
 		),
 		mcp.WithArray("arguments",
-			mcp.Required(),
 			mcp.Description("Array of strings to pass to the command line"),
 			mcp.WithStringItems(),
 		),

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -47,7 +48,7 @@ func sedHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResu
 		}
 		return nil
 	})
-	var changed []string
+	var out []string
 	for _, f := range files {
 		data, err := os.ReadFile(f)
 		if err != nil {
@@ -59,11 +60,17 @@ func sedHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResu
 				continue
 			}
 			rel, _ := filepath.Rel(rootDir, f)
-			changed = append(changed, rel)
+			oldLines := strings.Split(string(data), "\n")
+			newLines := strings.Split(string(newData), "\n")
+			for i := 0; i < len(newLines); i++ {
+				if i >= len(oldLines) || oldLines[i] != newLines[i] {
+					out = append(out, fmt.Sprintf("%s:%d:%s", rel, i+1, newLines[i]))
+				}
+			}
 		}
 	}
-	if changed == nil {
+	if out == nil {
 		return mcp.NewToolResultText(""), nil
 	}
-	return mcp.NewToolResultText(strings.Join(changed, "\n")), nil
+	return mcp.NewToolResultText(strings.Join(out, "\n")), nil
 }

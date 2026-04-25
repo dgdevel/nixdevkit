@@ -31,8 +31,8 @@ func TestSedReplace(t *testing.T) {
 	if result.IsError {
 		t.Fatal("sed returned error")
 	}
-	if textOf(t, result) != "file1.txt" {
-		t.Errorf("sed: got %q, want %q", textOf(t, result), "file1.txt")
+	if textOf(t, result) != "file1.txt:1:HI" {
+		t.Errorf("sed: got %q, want %q", textOf(t, result), "file1.txt:1:HI")
 	}
 	data, _ := os.ReadFile(filepath.Join(rootDir, "file1.txt"))
 	if string(data) != "HI\nworld\nfoo" {
@@ -87,7 +87,7 @@ func TestSedGlobstar(t *testing.T) {
 	}
 	lines := strings.Split(textOf(t, result), "\n")
 	sort.Strings(lines)
-	want := []string{"file1.txt", "subdir/nested.txt"}
+	want := []string{"file1.txt:1:HEY", "subdir/nested.txt:1:HEY"}
 	if len(lines) != len(want) {
 		t.Fatalf("sed **/*.txt: got %v, want %v", lines, want)
 	}
