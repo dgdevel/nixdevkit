@@ -366,6 +366,32 @@ func TestPatchNoHunksNoOp(t *testing.T) {
 	}
 }
 
+func TestPatchMultipleHunksSameFile(t *testing.T) {
+	root := setupTestRoot(t)
+	os.WriteFile(filepath.Join(root, "multi.txt"), []byte("a\nb\nc\nd\ne"), 0644)
+
+	patchText := "--- /multi.txt\n+++ /multi.txt\n@@ -2,1 +2,1 @@\n-b\n+B\n@@ -4,1 +4,1 @@\n-d\n+D"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("patch returned error: %s", textOf(t, result))
+	}
+	data, _ := os.ReadFile(filepath.Join(root, "multi.txt"))
+	if string(data) != "a\nB\nc\nD\ne\n" {
+		t.Errorf("multi-hunk: got %q, want %q", string(data), "a\nB\nc\nD\ne\n")
+	}
+}
+
 func TestPatchRoundTripRemoved(t *testing.T) {
 	root := setupTestRoot(t)
 	os.WriteFile(filepath.Join(root, "file2.txt"), []byte("hello\nfoo"), 0644)
