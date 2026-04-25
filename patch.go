@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -72,7 +73,7 @@ func patchHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 			}
 			switch l[0] {
 			case ' ':
-				if fileLines[lineIdx] != l[1:] {
+				if whitespaceNorm(fileLines[lineIdx]) != whitespaceNorm(l[1:]) {
 					return mcp.NewToolResultError(fmt.Sprintf(
 						"hunk @@ -%d,%d @@ expected context %q at line %d but found %q -- file may have shifted after previous edits",
 						h.start1, h.count1, l[1:], lineIdx+1, fileLines[lineIdx])), nil
@@ -87,13 +88,17 @@ func patchHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 		h := hunks[hi]
 		start := h.start1 - 1
 		var newLines []string
+		lineIdx := start
 		for _, l := range h.body {
 			if len(l) == 0 {
 				continue
 			}
 			switch l[0] {
 			case ' ':
-				newLines = append(newLines, l[1:])
+				newLines = append(newLines, fileLines[lineIdx])
+				lineIdx++
+			case '-':
+				lineIdx++
 			case '+':
 				newLines = append(newLines, l[1:])
 			}
@@ -143,4 +148,21 @@ func parseHunks(lines []string) []hunk {
 		hunks = append(hunks, hunk{s1, c1, body})
 	}
 	return hunks
+}
+
+func whitespaceNorm(s string) string {
+	var b strings.Builder
+	prev := false
+	for _, r := range s {
+		if unicode.IsSpace(r) {
+			if !prev {
+				b.WriteByte(' ')
+				prev = true
+			}
+			continue
+		}
+		b.WriteRune(r)
+		prev = false
+	}
+	return strings.TrimSpace(b.String())
 }

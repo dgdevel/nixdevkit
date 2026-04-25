@@ -47,7 +47,13 @@ func catbHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		if line == "" {
 			b.WriteString("\n")
 		} else {
-			fmt.Fprintf(&b, "%6d\t%s\n", from+i+1, line)
+			visible := strings.ReplaceAll(line, "\t", "→")
+			visible = strings.TrimRight(visible, " ")
+			trailing := len(line) - len(strings.TrimRight(line, " "))
+			if trailing > 0 {
+				visible += strings.Repeat("·", trailing)
+			}
+			fmt.Fprintf(&b, "%6d\t%s\n", from+i+1, visible)
 		}
 	}
 	return mcp.NewToolResultText(b.String()), nil

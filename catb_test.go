@@ -185,3 +185,57 @@ func TestCatBLimit200WithOffset(t *testing.T) {
 		t.Errorf("expected cut prefix with offset 49, got %q", got[:80])
 	}
 }
+
+func TestCatBVisualTab(t *testing.T) {
+	setupTestRoot(t)
+	os.WriteFile(filepath.Join(rootDir, "tabs.txt"), []byte("a\tb\tc"), 0644)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "cat-b",
+			Arguments: map[string]interface{}{
+				"path":       "/tabs.txt",
+				"line_range": ":",
+			},
+		},
+	}
+	result, err := catbHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("cat-b returned error")
+	}
+	want := "     1\ta→b→c\n"
+	got := result.Content[0].(mcp.TextContent).Text
+	if got != want {
+		t.Errorf("cat-b tab: got %q, want %q", got, want)
+	}
+}
+
+func TestCatBVisualTrailingSpace(t *testing.T) {
+	setupTestRoot(t)
+	os.WriteFile(filepath.Join(rootDir, "trailing.txt"), []byte("hello   \nworld  "), 0644)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "cat-b",
+			Arguments: map[string]interface{}{
+				"path":       "/trailing.txt",
+				"line_range": ":",
+			},
+		},
+	}
+	result, err := catbHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("cat-b returned error")
+	}
+	want := "     1\thello···\n     2\tworld··\n"
+	got := result.Content[0].(mcp.TextContent).Text
+	if got != want {
+		t.Errorf("cat-b trailing: got %q, want %q", got, want)
+	}
+}

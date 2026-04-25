@@ -429,3 +429,55 @@ func TestPatchRoundTripRemoved(t *testing.T) {
 		t.Errorf("round-trip removed: got %q", string(data))
 	}
 }
+
+func TestPatchIgnoreWhitespace(t *testing.T) {
+	root := setupTestRoot(t)
+	os.WriteFile(filepath.Join(root, "ws.txt"), []byte("  hello   world  \ngoodbye"), 0644)
+
+	patchText := "--- /ws.txt\n+++ /ws.txt\n@@ -1,2 +1,2 @@\n hello world\n-goodbye\n+see ya"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("patch ignore whitespace returned error: %s", textOf(t, result))
+	}
+	data, _ := os.ReadFile(filepath.Join(root, "ws.txt"))
+	if string(data) != "  hello   world  \nsee ya\n" {
+		t.Errorf("patch ignore whitespace: got %q", string(data))
+	}
+}
+
+func TestPatchIgnoreWhitespacePreservesFileContent(t *testing.T) {
+	root := setupTestRoot(t)
+	os.WriteFile(filepath.Join(root, "ws2.txt"), []byte("\thello\t\n\tworld\t"), 0644)
+
+	patchText := "--- /ws2.txt\n+++ /ws2.txt\n@@ -1,2 +1,2 @@\n hello\n-world\n+earth"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("patch returned error: %s", textOf(t, result))
+	}
+	data, _ := os.ReadFile(filepath.Join(root, "ws2.txt"))
+	if string(data) != "\thello\t\nearth\n" {
+		t.Errorf("patch preserve file whitespace: got %q", string(data))
+	}
+}
