@@ -14,7 +14,7 @@ func TestCreateFile(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "create",
+			Name: "file_create",
 			Arguments: map[string]interface{}{
 				"path":    "/newfile.txt",
 				"content": "new content",
@@ -39,7 +39,7 @@ func TestCreateExisting(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "create",
+			Name: "file_create",
 			Arguments: map[string]interface{}{
 				"path":    "/file1.txt",
 				"content": "overwrite",
@@ -60,7 +60,7 @@ func TestCreateEscape(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "create",
+			Name: "file_create",
 			Arguments: map[string]interface{}{
 				"path":    "../../etc/evil",
 				"content": "x",
@@ -81,7 +81,7 @@ func TestCreateNested(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "create",
+			Name: "file_create",
 			Arguments: map[string]interface{}{
 				"path":    "/subdir/new.txt",
 				"content": "nested",
@@ -106,7 +106,7 @@ func TestCreateMkdirAll(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "create",
+			Name: "file_create",
 			Arguments: map[string]interface{}{
 				"path":    "/a/b/c/deep.txt",
 				"content": "deep",

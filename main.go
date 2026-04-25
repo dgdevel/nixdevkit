@@ -63,7 +63,7 @@ func main() {
 		server.WithToolCapabilities(true),
 		server.WithToolFilter(func(ctx context.Context, tools []mcp.Tool) []mcp.Tool {
 			readonlyHidden := map[string]bool{
-				"create": true, "sed": true, "patch": true, "rm": true, "mv": true,
+				"file_create": true, "sed": true, "patch": true, "rm": true, "mv": true,
 			}
 
 			var showSet map[string]bool
@@ -130,7 +130,7 @@ func main() {
 		),
 	), catbHandler)
 
-	s.AddTool(mcp.NewTool("create",
+	s.AddTool(mcp.NewTool("file_create",
 		mcp.WithDescription("Create a file"),
 		mcp.WithString("path",
 			mcp.Required(),
@@ -270,7 +270,7 @@ func main() {
 	), tasksClearHandler)
 
 	s.AddTool(mcp.NewTool("w3m-dump",
-		mcp.WithDescription("Fetch a webpage text"),
+		mcp.WithDescription("Fetch a webpage text (like `w3m -dump`)"),
 		mcp.WithString("url",
 			mcp.Required(),
 			mcp.Description("URL to fetch"),

@@ -19,7 +19,7 @@ All paths are virtual — `/` maps to the root directory. Path traversal is bloc
 
 ## Tools
 
-### `create` — Create a file
+### `file_create` — Create a file
 
 | Argument | Description |
 |----------|-------------|
@@ -277,7 +277,7 @@ Examples:
 
 When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 
-- `create`
+- `file_create`
 - `sed`
 - `patch`
 - `rm`

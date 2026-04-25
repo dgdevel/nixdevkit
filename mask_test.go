@@ -93,7 +93,7 @@ func TestCreateErrorMasksPath(t *testing.T) {
 	root := setupTestRoot(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "create",
+			Name: "file_create",
 			Arguments: map[string]interface{}{
 				"path":    "/file1.txt/nested/file.txt",
 				"content": "data",

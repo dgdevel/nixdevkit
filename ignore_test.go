@@ -155,7 +155,7 @@ func TestCreateIgnored(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "create",
+			Name: "file_create",
 			Arguments: map[string]interface{}{
 				"path":    ".git/hooks/pre-commit",
 				"content": "#!/bin/sh",
