@@ -38,7 +38,7 @@ func TestTasksCreateTopLevel(t *testing.T) {
 	setupTasksTest(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "First task",
 			},
@@ -52,8 +52,8 @@ func TestTasksCreateTopLevel(t *testing.T) {
 		t.Fatal("tasks_create returned error")
 	}
 	text := textOf(t, result)
-	if text != "ID: 1" {
-		t.Errorf("expected 'ID: 1', got %q", text)
+	if text != "Created ID: 1" {
+		t.Errorf("expected 'Created ID: 1', got %q", text)
 	}
 }
 
@@ -62,7 +62,7 @@ func TestTasksCreateMultiple(t *testing.T) {
 	for _, desc := range []string{"Task A", "Task B", "Task C"} {
 		req := mcp.CallToolRequest{
 			Params: mcp.CallToolParams{
-				Name: "tasks_create",
+				Name: "task_create",
 				Arguments: map[string]interface{}{
 					"description": desc,
 				},
@@ -97,7 +97,7 @@ func TestTasksCreateWithParent(t *testing.T) {
 	setupTasksTest(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Parent task",
 			},
@@ -106,7 +106,7 @@ func TestTasksCreateWithParent(t *testing.T) {
 	tasksCreateHandler(context.Background(), req)
 	req = mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Child task",
 				"parent":      "1",
@@ -121,8 +121,8 @@ func TestTasksCreateWithParent(t *testing.T) {
 		t.Fatal("tasks_create returned error")
 	}
 	text := textOf(t, result)
-	if text != "ID: 1.1" {
-		t.Errorf("expected 'ID: 1.1', got %q", text)
+	if text != "Created ID: 1.1" {
+		t.Errorf("expected 'Created ID: 1.1', got %q", text)
 	}
 	req = mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -145,7 +145,7 @@ func TestTasksCreateGrandchild(t *testing.T) {
 	setupTasksTest(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Root",
 			},
@@ -154,7 +154,7 @@ func TestTasksCreateGrandchild(t *testing.T) {
 	tasksCreateHandler(context.Background(), req)
 	req = mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Child",
 				"parent":      "1",
@@ -164,7 +164,7 @@ func TestTasksCreateGrandchild(t *testing.T) {
 	tasksCreateHandler(context.Background(), req)
 	req = mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Grandchild",
 				"parent":      "1.1",
@@ -179,8 +179,8 @@ func TestTasksCreateGrandchild(t *testing.T) {
 		t.Fatal("tasks_create returned error")
 	}
 	text := textOf(t, result)
-	if text != "ID: 1.1.1" {
-		t.Errorf("expected 'ID: 1.1.1', got %q", text)
+	if text != "Created ID: 1.1.1" {
+		t.Errorf("expected 'Created ID: 1.1.1', got %q", text)
 	}
 }
 
@@ -188,7 +188,7 @@ func TestTasksCreateParentNotFound(t *testing.T) {
 	setupTasksTest(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Orphan",
 				"parent":      "99",
@@ -208,7 +208,7 @@ func TestTasksSetStatus(t *testing.T) {
 	setupTasksTest(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Task to update",
 			},
@@ -226,7 +226,7 @@ func TestTasksSetStatus(t *testing.T) {
 	} {
 		req := mcp.CallToolRequest{
 			Params: mcp.CallToolParams{
-				Name: "tasks_set_status",
+				Name: "task_set_status",
 				Arguments: map[string]interface{}{
 					"ID":     "1",
 					"status": tc.status,
@@ -259,7 +259,7 @@ func TestTasksSetStatusInvalid(t *testing.T) {
 	setupTasksTest(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_set_status",
+			Name: "task_set_status",
 			Arguments: map[string]interface{}{
 				"ID":     "1",
 				"status": "invalid",
@@ -279,7 +279,7 @@ func TestTasksSetStatusNotFound(t *testing.T) {
 	setupTasksTest(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_set_status",
+			Name: "task_set_status",
 			Arguments: map[string]interface{}{
 				"ID":     "99",
 				"status": "completed",
@@ -300,7 +300,7 @@ func TestTasksDelete(t *testing.T) {
 	for _, desc := range []string{"Task A", "Task B", "Task C"} {
 		req := mcp.CallToolRequest{
 			Params: mcp.CallToolParams{
-				Name: "tasks_create",
+				Name: "task_create",
 				Arguments: map[string]interface{}{
 					"description": desc,
 				},
@@ -310,7 +310,7 @@ func TestTasksDelete(t *testing.T) {
 	}
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_delete",
+			Name: "task_delete",
 			Arguments: map[string]interface{}{
 				"ID": "2",
 			},
@@ -344,7 +344,7 @@ func TestTasksDeleteWithChildren(t *testing.T) {
 	setupTasksTest(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Parent",
 			},
@@ -353,7 +353,7 @@ func TestTasksDeleteWithChildren(t *testing.T) {
 	tasksCreateHandler(context.Background(), req)
 	req = mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Child 1",
 				"parent":      "1",
@@ -363,7 +363,7 @@ func TestTasksDeleteWithChildren(t *testing.T) {
 	tasksCreateHandler(context.Background(), req)
 	req = mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Child 2",
 				"parent":      "1",
@@ -373,7 +373,7 @@ func TestTasksDeleteWithChildren(t *testing.T) {
 	tasksCreateHandler(context.Background(), req)
 	req = mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_delete",
+			Name: "task_delete",
 			Arguments: map[string]interface{}{
 				"ID": "1",
 			},
@@ -406,7 +406,7 @@ func TestTasksClear(t *testing.T) {
 	setupTasksTest(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "Task to clear",
 			},
@@ -524,7 +524,7 @@ func TestTasksNextIdAfterDelete(t *testing.T) {
 	for _, desc := range []string{"A", "B", "C"} {
 		req := mcp.CallToolRequest{
 			Params: mcp.CallToolParams{
-				Name: "tasks_create",
+				Name: "task_create",
 				Arguments: map[string]interface{}{
 					"description": desc,
 				},
@@ -534,7 +534,7 @@ func TestTasksNextIdAfterDelete(t *testing.T) {
 	}
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_delete",
+			Name: "task_delete",
 			Arguments: map[string]interface{}{
 				"ID": "2",
 			},
@@ -543,7 +543,7 @@ func TestTasksNextIdAfterDelete(t *testing.T) {
 	tasksDeleteHandler(context.Background(), req)
 	req = mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "tasks_create",
+			Name: "task_create",
 			Arguments: map[string]interface{}{
 				"description": "D",
 			},
@@ -554,7 +554,7 @@ func TestTasksNextIdAfterDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := textOf(t, result)
-	if text != "ID: 4" {
-		t.Errorf("expected 'ID: 4' after deleting task 2, got %q", text)
+	if text != "Created ID: 4" {
+		t.Errorf("expected 'Created ID: 4' after deleting task 2, got %q", text)
 	}
 }

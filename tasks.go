@@ -221,7 +221,7 @@ func tasksCreateHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.Call
 	if err := writeTasks(tasks); err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	return mcp.NewToolResultText(fmt.Sprintf("ID: %s", id)), nil
+	return mcp.NewToolResultText(fmt.Sprintf("Created ID: %s", id)), nil
 }
 
 func tasksSetStatusHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {

@@ -171,20 +171,20 @@ func TestCreateIgnored(t *testing.T) {
 	}
 }
 
-func TestEditIgnored(t *testing.T) {
+func TestSedIgnored(t *testing.T) {
 	setupIgnoreTest(t, `^\.git`)
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "replace_range",
+			Name: "sed",
 			Arguments: map[string]interface{}{
-				"path":       ".git/config",
-				"line_range": "0:0",
-				"content":    "new",
+				"pattern":     "old",
+				"replacement": "new",
+				"pathspec":    ".git/config",
 			},
 		},
 	}
-	result, err := replaceRangeHandler(context.Background(), req)
+	result, err := sedHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}

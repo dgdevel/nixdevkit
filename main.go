@@ -63,7 +63,7 @@ func main() {
 		server.WithToolCapabilities(true),
 		server.WithToolFilter(func(ctx context.Context, tools []mcp.Tool) []mcp.Tool {
 			readonlyHidden := map[string]bool{
-				"create": true, "replace_range": true, "sed": true, "patch": true, "rm": true, "mv": true,
+				"create": true, "sed": true, "patch": true, "rm": true, "mv": true,
 			}
 
 			var showSet map[string]bool
@@ -153,22 +153,6 @@ func main() {
 			mcp.Description("File content"),
 		),
 	), createHandler)
-
-	s.AddTool(mcp.NewTool("replace_range",
-		mcp.WithDescription("Replace a file section"),
-		mcp.WithString("path",
-			mcp.Required(),
-			mcp.Description("File path"),
-		),
-		mcp.WithString("line_range",
-			mcp.Required(),
-			mcp.Description("Line range [from]:[to], 0-indexed"),
-		),
-		mcp.WithString("content",
-			mcp.Required(),
-			mcp.Description("New content"),
-		),
-	), replaceRangeHandler)
 
 	s.AddTool(mcp.NewTool("mv",
 		mcp.WithDescription("Move files"),
@@ -262,7 +246,7 @@ func main() {
 		mcp.WithDescription("List of tasks prefixed by ID and state ([ ] created, [_] in progress, [X] completed)"),
 	), tasksListHandler)
 
-	s.AddTool(mcp.NewTool("tasks_create",
+	s.AddTool(mcp.NewTool("task_create",
 		mcp.WithDescription("Append a task to the task list"),
 		mcp.WithString("description",
 			mcp.Required(),
@@ -273,7 +257,7 @@ func main() {
 		),
 	), tasksCreateHandler)
 
-	s.AddTool(mcp.NewTool("tasks_set_status",
+	s.AddTool(mcp.NewTool("task_set_status",
 		mcp.WithDescription("Change status of a task"),
 		mcp.WithString("ID",
 			mcp.Required(),
@@ -285,7 +269,7 @@ func main() {
 		),
 	), tasksSetStatusHandler)
 
-	s.AddTool(mcp.NewTool("tasks_delete",
+	s.AddTool(mcp.NewTool("task_delete",
 		mcp.WithDescription("Delete a task"),
 		mcp.WithString("ID",
 			mcp.Required(),
@@ -317,7 +301,7 @@ func main() {
 		mcp.WithDescription("List available commands"),
 	), availableCommandsHandler)
 
-	s.AddTool(mcp.NewTool("exec_command",
+	s.AddTool(mcp.NewTool("run_command",
 		mcp.WithDescription("Run the command from available_commands"),
 		mcp.WithString("name",
 			mcp.Required(),
@@ -332,7 +316,7 @@ func main() {
 			mcp.Required(),
 			mcp.Description("Timeout in seconds"),
 		),
-	), execCommandHandler)
+	), runCommandHandler)
 
 	mcpsCfg, err := mcps.LoadConfig(mcps.ConfigPath(rootDir))
 	if err != nil {

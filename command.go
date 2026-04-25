@@ -87,7 +87,7 @@ func availableCommandsHandler(ctx context.Context, req mcp.CallToolRequest) (*mc
 	return mcp.NewToolResultText(buf.String()), nil
 }
 
-func execCommandHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func runCommandHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	name, err := req.RequireString("name")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil

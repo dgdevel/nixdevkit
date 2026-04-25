@@ -103,7 +103,7 @@ func TestExecCommand(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "exec_command",
+			Name: "run_command",
 			Arguments: map[string]interface{}{
 				"name":      "echo_test",
 				"arguments": []interface{}{"hello", "world"},
@@ -111,7 +111,7 @@ func TestExecCommand(t *testing.T) {
 			},
 		},
 	}
-	result, err := execCommandHandler(context.Background(), req)
+	result, err := runCommandHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +135,7 @@ func TestExecCommandWithArgs(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "exec_command",
+			Name: "run_command",
 			Arguments: map[string]interface{}{
 				"name":      "build",
 				"arguments": []interface{}{"clean"},
@@ -143,7 +143,7 @@ func TestExecCommandWithArgs(t *testing.T) {
 			},
 		},
 	}
-	result, err := execCommandHandler(context.Background(), req)
+	result, err := runCommandHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,7 +166,7 @@ func TestExecCommandUnknown(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "exec_command",
+			Name: "run_command",
 			Arguments: map[string]interface{}{
 				"name":      "nonexistent",
 				"arguments": []interface{}{},
@@ -174,7 +174,7 @@ func TestExecCommandUnknown(t *testing.T) {
 			},
 		},
 	}
-	result, err := execCommandHandler(context.Background(), req)
+	result, err := runCommandHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +194,7 @@ func TestExecCommandWrongArgCount(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "exec_command",
+			Name: "run_command",
 			Arguments: map[string]interface{}{
 				"name":      "build",
 				"arguments": []interface{}{},
@@ -202,7 +202,7 @@ func TestExecCommandWrongArgCount(t *testing.T) {
 			},
 		},
 	}
-	result, err := execCommandHandler(context.Background(), req)
+	result, err := runCommandHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,7 +220,7 @@ func TestExecCommandNoCmdline(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "exec_command",
+			Name: "run_command",
 			Arguments: map[string]interface{}{
 				"name":      "build",
 				"arguments": []interface{}{},
@@ -228,7 +228,7 @@ func TestExecCommandNoCmdline(t *testing.T) {
 			},
 		},
 	}
-	result, err := execCommandHandler(context.Background(), req)
+	result, err := runCommandHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -248,7 +248,7 @@ func TestExecCommandTimeout(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "exec_command",
+			Name: "run_command",
 			Arguments: map[string]interface{}{
 				"name":      "slow",
 				"arguments": []interface{}{"30"},
@@ -258,7 +258,7 @@ func TestExecCommandTimeout(t *testing.T) {
 	}
 
 	start := time.Now()
-	result, err := execCommandHandler(context.Background(), req)
+	result, err := runCommandHandler(context.Background(), req)
 	elapsed := time.Since(start)
 	if err != nil {
 		t.Fatal(err)
@@ -285,7 +285,7 @@ func TestExecCommandNullByte(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "exec_command",
+			Name: "run_command",
 			Arguments: map[string]interface{}{
 				"name":      "build",
 				"arguments": []interface{}{"bad\x00arg"},
@@ -293,7 +293,7 @@ func TestExecCommandNullByte(t *testing.T) {
 			},
 		},
 	}
-	result, err := execCommandHandler(context.Background(), req)
+	result, err := runCommandHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,7 +316,7 @@ func TestExecCommandStderr(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "exec_command",
+			Name: "run_command",
 			Arguments: map[string]interface{}{
 				"name":      "err_test",
 				"arguments": []interface{}{script},
@@ -324,7 +324,7 @@ func TestExecCommandStderr(t *testing.T) {
 			},
 		},
 	}
-	result, err := execCommandHandler(context.Background(), req)
+	result, err := runCommandHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}

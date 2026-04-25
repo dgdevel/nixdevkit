@@ -62,16 +62,6 @@ Returns file content. Use `":"` for the full file, `"2:"` from line 2 onward, `"
 
 Like `cat -b`: non-empty lines are prefixed with a right-aligned line number and a tab. Empty lines are printed without a number.
 
-### `replace_range` — Replace a file section
-
-| Argument | Description |
-|----------|-------------|
-| `path` | File path |
-| `line_range` | Line range `[from]:[to]`, 0-indexed |
-| `content` | New content |
-
-Replaces the specified line range with the new content. Use `"0:0"` to prepend, empty content to delete lines.
-
 ### `mv` — Move files
 
 | Argument | Description |
@@ -203,7 +193,7 @@ Command: run
 Description: Run the main executable; target_folder is the directory to work with, config_file is the reference configuration to use.
 ```
 
-### `exec_command` — Run the command
+### `run_command` — Run the command
 
 | Argument | Description |
 |----------|-------------|
@@ -213,7 +203,7 @@ Description: Run the main executable; target_folder is the directory to work wit
 
 Validates the command name and argument count against the configuration, sanitizes input, and executes the command. Arguments are only accepted when the command defines an `arguments` list; passing arguments to a command that takes none is an error. Stdout and stderr are merged and returned untouched. On timeout, the process is sent SIGTERM, then SIGKILL after 5 seconds. If a timeout occurs, the output is prefixed with `Command timed out. Partial output.`.
 
-For example, with `build_cmdline=make` and `build_arguments=target`, calling `exec_command` with `name="build"` and `arguments=["clean"]` executes `make clean`.
+For example, with `build_cmdline=make` and `build_arguments=target`, calling `run_command` with `name="build"` and `arguments=["clean"]` executes `make clean`.
 
 ## Task Management
 
@@ -243,23 +233,23 @@ No arguments.
 
 Returns the content of the tasks file.
 
-### `tasks_create` — Append a task to the task list
+### `task_create` — Append a task to the task list
 
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `description` | Yes | Task description |
 | `parent` | No | ID of the parent task |
 
-Returns the assigned ID in the format `ID: $ID`. When `parent` is provided, the new task becomes a child (e.g. `parent="2"` → new ID `2.1`).
+Returns the assigned ID in the format `Created ID: $ID`. When `parent` is provided, the new task becomes a child (e.g. `parent="2"` → new ID `2.1`).
 
-### `tasks_set_status` — Change status of a task
+### `task_set_status` — Change status of a task
 
 | Argument | Description |
 |----------|-------------|
 | `ID` | Task ID |
 | `status` | One of: `created`, `in_progress`, `completed` |
 
-### `tasks_delete` — Delete a task
+### `task_delete` — Delete a task
 
 | Argument | Description |
 |----------|-------------|
@@ -297,17 +287,14 @@ Examples:
 When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 
 - `create`
-- `replace_range`
 - `sed`
 - `patch`
 - `rm`
 - `mv`
 
-Read-only tools (`ls`, `find`, `read`, `grep`, `diff`, `stat`, `w3m-dump`, `online_search`, `available_commands`) remain available.
-
 ### `commands` — User-defined commands
 
-The `commands` section lets you define named commands that can be listed and executed through the `available_commands` and `exec_command` tools. Each command requires a `cmdline` and can optionally have a `description` and an `arguments` list.
+The `commands` section lets you define named commands that can be listed and executed through the `available_commands` and `run_command` tools. Each command requires a `cmdline` and can optionally have a `description` and an `arguments` list.
 
 | Key | Required | Description |
 |-----|----------|-------------|
