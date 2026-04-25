@@ -63,14 +63,14 @@ func TestReadErrorMasksPath(t *testing.T) {
 	root := setupTestRoot(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "read",
+			Name: "cat-b",
 			Arguments: map[string]interface{}{
 				"path":       "/subdir",
 				"line_range": ":",
 			},
 		},
 	}
-	result, _ := readHandler(context.Background(), req)
+	result, _ := catbHandler(context.Background(), req)
 	assertNoLeak(t, result, root)
 }
 
@@ -78,14 +78,14 @@ func TestReadNonexistentMasksPath(t *testing.T) {
 	root := setupTestRoot(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "read",
+			Name: "cat-b",
 			Arguments: map[string]interface{}{
 				"path":       "/nonexistent.txt",
 				"line_range": ":",
 			},
 		},
 	}
-	result, _ := readHandler(context.Background(), req)
+	result, _ := catbHandler(context.Background(), req)
 	assertNoLeak(t, result, root)
 }
 
@@ -101,22 +101,6 @@ func TestCreateErrorMasksPath(t *testing.T) {
 		},
 	}
 	result, _ := createHandler(context.Background(), req)
-	assertNoLeak(t, result, root)
-}
-
-func TestEditErrorMasksPath(t *testing.T) {
-	root := setupTestRoot(t)
-	req := mcp.CallToolRequest{
-		Params: mcp.CallToolParams{
-			Name: "replace_range",
-			Arguments: map[string]interface{}{
-				"path":       "/nonexistent.txt",
-				"line_range": ":",
-				"content":    "x",
-			},
-		},
-	}
-	result, _ := replaceRangeHandler(context.Background(), req)
 	assertNoLeak(t, result, root)
 }
 

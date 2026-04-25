@@ -118,20 +118,8 @@ func main() {
 		),
 	), findHandler)
 
-	s.AddTool(mcp.NewTool("read",
-		mcp.WithDescription("Read a file"),
-		mcp.WithString("path",
-			mcp.Required(),
-			mcp.Description("File path"),
-		),
-		mcp.WithString("line_range",
-			mcp.Required(),
-			mcp.Description("Line range [from]:[to], 0-indexed"),
-		),
-	), readHandler)
-
 	s.AddTool(mcp.NewTool("cat-b",
-		mcp.WithDescription("Read a file with line numbers"),
+		mcp.WithDescription("Read a file with line numbers (like `cat -b`)"),
 		mcp.WithString("path",
 			mcp.Required(),
 			mcp.Description("File path"),

@@ -44,16 +44,7 @@ Returns newline-separated entries with full relative paths. Directories end with
 
 Recursively walks the root. Supports `*` and `**` (globstar) syntax. Directories end with `/`.
 
-### `read` — Read a file
-
-| Argument | Description |
-|----------|-------------|
-| `path` | File path |
-| `line_range` | Line range `[from]:[to]`, 0-indexed |
-
-Returns file content. Use `":"` for the full file, `"2:"` from line 2 onward, `":3"` for lines 1–3. Invalid numbers default to full range.
-
-### `cat-b` — Read a file with line numbers
+### `cat-b` — Read a file with line numbers (like `cat -b`)
 
 | Argument | Description |
 |----------|-------------|

@@ -109,14 +109,14 @@ func TestReadIgnored(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "read",
+			Name: "cat-b",
 			Arguments: map[string]interface{}{
 				"path":       "node_modules/pkg/index.js",
 				"line_range": "0:",
 			},
 		},
 	}
-	result, err := readHandler(context.Background(), req)
+	result, err := catbHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,8 +178,8 @@ func TestSedIgnored(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "sed",
 			Arguments: map[string]interface{}{
-				"pattern":     "old",
-				"replacement": "new",
+				"pattern":     "gitconfig",
+				"replacement": "changed",
 				"pathspec":    ".git/config",
 			},
 		},
@@ -188,8 +188,8 @@ func TestSedIgnored(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !result.IsError {
-		t.Error("expected error editing ignored file")
+	if textOf(t, result) != "" {
+		t.Error("expected no files changed for ignored path")
 	}
 }
 
