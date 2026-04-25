@@ -196,6 +196,14 @@ Validates the command name and argument count against the configuration, sanitiz
 
 For example, with `build_cmdline=make` and `build_arguments=target`, calling `run_command` with `name="build"` and `arguments=["clean"]` executes `make clean`.
 
+### `examples` — Show usage examples for a tool
+
+| Argument | Description |
+|----------|-------------|
+| `tool_name` | Name of the tool to get examples for |
+
+Returns at least 3 examples of request/response pairs for the given tool. If the tool name is unknown, returns an error listing all available tool names.
+
 ## Task Management
 
 Tasks are stored in `[root]/.nixdevkit/tasks.txt`. Each task has a system-assigned hierarchical ID, a status, and a description.

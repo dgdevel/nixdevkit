@@ -285,6 +285,14 @@ func main() {
 		),
 	), onlineSearchHandler)
 
+	s.AddTool(mcp.NewTool("examples",
+		mcp.WithDescription("Show usage examples for a tool"),
+		mcp.WithString("tool_name",
+			mcp.Required(),
+			mcp.Description("Name of the tool to get examples for"),
+		),
+	), examplesHandler)
+
 	s.AddTool(mcp.NewTool("available_commands",
 		mcp.WithDescription("List available commands"),
 	), availableCommandsHandler)
