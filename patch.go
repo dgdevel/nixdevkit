@@ -54,6 +54,11 @@ func patchHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 	fileLines := splitLines(string(data))
 
 	hunks := parseHunks(lines[2:])
+	for _, h := range hunks {
+		if h.start1 < 1 || h.start1-1+h.count1 > len(fileLines) {
+			return mcp.NewToolResultError("invalid patch: hunk references lines outside file"), nil
+		}
+	}
 	for hi := len(hunks) - 1; hi >= 0; hi-- {
 		h := hunks[hi]
 		start := h.start1 - 1

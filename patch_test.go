@@ -236,6 +236,136 @@ func TestPatchRoundTripAdded(t *testing.T) {
 	}
 }
 
+func TestPatchMultiFileDiff(t *testing.T) {
+	setupTestRoot(t)
+
+	patchText := "--- /file1.txt\n+++ /file1.txt\n@@ -1,3 +1,2 @@\n hello\n-world\n foo\n--- /other.txt\n+++ /other.txt\n@@ -200,1 +200,1 @@\n-old\n+new"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error for multi-file patch with out-of-bounds hunk")
+	}
+}
+
+func TestPatchMalformedHunkHeader(t *testing.T) {
+	setupTestRoot(t)
+
+	patchText := "--- /file1.txt\n+++ /file1.txt\n@@ bad\n hello\n"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error for malformed hunk header")
+	}
+}
+
+func TestPatchHunkStartZero(t *testing.T) {
+	setupTestRoot(t)
+
+	patchText := "--- /file1.txt\n+++ /file1.txt\n@@ -0,1 @@\n hello\n"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error for hunk with start line 0")
+	}
+}
+
+func TestPatchHunkStartBeyondFile(t *testing.T) {
+	setupTestRoot(t)
+
+	patchText := "--- /file1.txt\n+++ /file1.txt\n@@ -100,1 @@\n hello\n"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error for hunk start beyond file length")
+	}
+}
+
+func TestPatchHunkCountExceedsFile(t *testing.T) {
+	setupTestRoot(t)
+
+	patchText := "--- /file1.txt\n+++ /file1.txt\n@@ -1,100 @@\n hello\n"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error for hunk count exceeding file length")
+	}
+}
+
+func TestPatchNoHunksNoOp(t *testing.T) {
+	setupTestRoot(t)
+
+	patchText := "--- /file1.txt\n+++ /file1.txt\n"
+	patchReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "patch",
+			Arguments: map[string]interface{}{
+				"patch": patchText,
+			},
+		},
+	}
+	result, err := patchHandler(context.Background(), patchReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("expected success for no-hunk patch, got error: %s", textOf(t, result))
+	}
+	data, _ := os.ReadFile(filepath.Join(rootDir, "file1.txt"))
+	if string(data) != "hello\nworld\nfoo\n" {
+		t.Errorf("file modified unexpectedly: got %q", string(data))
+	}
+}
+
 func TestPatchRoundTripRemoved(t *testing.T) {
 	root := setupTestRoot(t)
 	os.WriteFile(filepath.Join(root, "file2.txt"), []byte("hello\nfoo"), 0644)
