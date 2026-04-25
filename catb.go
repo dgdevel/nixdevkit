@@ -38,6 +38,11 @@ func catbHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		to = len(lines)
 	}
 	var b strings.Builder
+	requested := to - from
+	if requested > 200 {
+		fmt.Fprintf(&b, "Output cut at 200 lines starting from %d\n", from)
+		to = from + 200
+	}
 	for i, line := range lines[from:to] {
 		if line == "" {
 			b.WriteString("\n")

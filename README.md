@@ -51,7 +51,7 @@ Recursively walks the root. Supports `*` and `**` (globstar) syntax. Directories
 | `path` | File path |
 | `line_range` | Line range `[from]:[to]`, 0-indexed |
 
-Like `cat -b`: non-empty lines are prefixed with a right-aligned line number and a tab. Empty lines are printed without a number.
+Like `cat -b`: non-empty lines are prefixed with a right-aligned line number and a tab. Empty lines are printed without a number. Output is limited to 200 lines; if the range exceeds this, a header `Output cut at 200 lines starting from N` is emitted before the truncated output.
 
 ### `mv` — Move files
 
