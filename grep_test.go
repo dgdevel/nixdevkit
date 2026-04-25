@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -112,5 +115,38 @@ func TestGrepNoMatch(t *testing.T) {
 	}
 	if textOf(t, result) != "" {
 		t.Errorf("grep nonexistent: expected empty, got %q", textOf(t, result))
+	}
+}
+
+func TestGrepLimit200(t *testing.T) {
+	root := t.TempDir()
+	for i := 0; i < 300; i++ {
+		os.WriteFile(filepath.Join(root, fmt.Sprintf("file%03d.txt", i)), []byte("match"), 0644)
+	}
+	rootDir = root
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "grep",
+			Arguments: map[string]interface{}{
+				"pattern":  "match",
+				"pathspec": "*.txt",
+			},
+		},
+	}
+	result, err := grepHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("grep returned error")
+	}
+	got := textOf(t, result)
+	if !strings.HasPrefix(got, "Output cut at 200 lines, refine the search pattern\n") {
+		t.Fatalf("expected cut prefix, got %q", got[:80])
+	}
+	lines := strings.Split(got, "\n")
+	if len(lines) != 201 {
+		t.Errorf("expected 201 lines, got %d", len(lines))
 	}
 }

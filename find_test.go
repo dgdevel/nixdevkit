@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -108,5 +111,38 @@ func TestFindNoMatch(t *testing.T) {
 	}
 	if textOf(t, result) != "" {
 		t.Errorf("find *.xyz: expected empty, got %q", textOf(t, result))
+	}
+}
+
+func TestFindLimit200(t *testing.T) {
+	root := t.TempDir()
+	for i := 0; i < 300; i++ {
+		os.WriteFile(filepath.Join(root, fmt.Sprintf("file%03d.txt", i)), []byte("x"), 0644)
+	}
+	rootDir = root
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "find",
+			Arguments: map[string]interface{}{
+				"pattern": "*.txt",
+			},
+		},
+	}
+	result, err := findHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("find returned error")
+	}
+	got := textOf(t, result)
+	if !strings.HasPrefix(got, "Output cut at 200 lines, refine the search pattern\n") {
+		t.Fatalf("expected cut prefix, got %q", got[:80])
+	}
+	lines := strings.Split(got, "\n")
+	// 1 cut header line + 200 data lines
+	if len(lines) != 201 {
+		t.Errorf("expected 201 lines, got %d", len(lines))
 	}
 }

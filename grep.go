@@ -65,5 +65,11 @@ func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 	if out == nil {
 		return mcp.NewToolResultText(""), nil
 	}
-	return mcp.NewToolResultText(strings.Join(out, "\n")), nil
+	var b strings.Builder
+	if len(out) > 200 {
+		b.WriteString("Output cut at 200 lines, refine the search pattern\n")
+		out = out[:200]
+	}
+	b.WriteString(strings.Join(out, "\n"))
+	return mcp.NewToolResultText(b.String()), nil
 }

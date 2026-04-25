@@ -51,5 +51,11 @@ func findHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 	if matches == nil {
 		return mcp.NewToolResultText(""), nil
 	}
-	return mcp.NewToolResultText(strings.Join(matches, "\n")), nil
+	var b strings.Builder
+	if len(matches) > 200 {
+		b.WriteString("Output cut at 200 lines, refine the search pattern\n")
+		matches = matches[:200]
+	}
+	b.WriteString(strings.Join(matches, "\n"))
+	return mcp.NewToolResultText(b.String()), nil
 }
