@@ -176,6 +176,54 @@ func TestLsEmptyPattern(t *testing.T) {
 	}
 }
 
+func TestLsDirectoryWithSlash(t *testing.T) {
+	setupTestRoot(t)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "ls",
+			Arguments: map[string]interface{}{
+				"pattern": "subdir/",
+			},
+		},
+	}
+	result, err := lsHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("ls returned error")
+	}
+	text := textOf(t, result)
+	if text != "subdir/nested.txt" {
+		t.Errorf("ls subdir/: got %q, want %q", text, "subdir/nested.txt")
+	}
+}
+
+func TestLsDirectoryWithoutSlash(t *testing.T) {
+	setupTestRoot(t)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "ls",
+			Arguments: map[string]interface{}{
+				"pattern": "subdir",
+			},
+		},
+	}
+	result, err := lsHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("ls returned error")
+	}
+	text := textOf(t, result)
+	if text != "subdir/nested.txt" {
+		t.Errorf("ls subdir: got %q, want %q", text, "subdir/nested.txt")
+	}
+}
+
 func TestLsLimit500(t *testing.T) {
 	root := t.TempDir()
 	for i := 0; i < 600; i++ {

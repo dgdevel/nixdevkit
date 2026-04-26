@@ -16,6 +16,16 @@ func lsHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResul
 	}
 	if pattern == "" || pattern == "." {
 		pattern = "*"
+	} else {
+		dirRef := strings.TrimSuffix(pattern, "/")
+		if !strings.ContainsAny(dirRef, "*?[") {
+			abs, rErr := resolve(dirRef)
+			if rErr == nil {
+				if info, sErr := os.Stat(abs); sErr == nil && info.IsDir() {
+					pattern = dirRef + "/*"
+				}
+			}
+		}
 	}
 	var matches []string
 	err = filepath.WalkDir(rootDir, func(path string, d os.DirEntry, err error) error {
