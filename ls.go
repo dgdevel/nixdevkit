@@ -14,6 +14,9 @@ func lsHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResul
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+	if pattern == "" || pattern == "." {
+		pattern = "*"
+	}
 	var matches []string
 	err = filepath.WalkDir(rootDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {

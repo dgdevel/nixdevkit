@@ -114,6 +114,68 @@ func TestLsNoMatch(t *testing.T) {
 	}
 }
 
+func TestLsDotPattern(t *testing.T) {
+	setupTestRoot(t)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "ls",
+			Arguments: map[string]interface{}{
+				"pattern": ".",
+			},
+		},
+	}
+	result, err := lsHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("ls returned error")
+	}
+	lines := strings.Split(textOf(t, result), "\n")
+	sort.Strings(lines)
+	want := []string{"file1.txt", "subdir/"}
+	if len(lines) != len(want) {
+		t.Fatalf("ls .: got %v, want %v", lines, want)
+	}
+	for i, l := range lines {
+		if l != want[i] {
+			t.Errorf("ls .: got %v, want %v", lines, want)
+		}
+	}
+}
+
+func TestLsEmptyPattern(t *testing.T) {
+	setupTestRoot(t)
+
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "ls",
+			Arguments: map[string]interface{}{
+				"pattern": "",
+			},
+		},
+	}
+	result, err := lsHandler(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("ls returned error")
+	}
+	lines := strings.Split(textOf(t, result), "\n")
+	sort.Strings(lines)
+	want := []string{"file1.txt", "subdir/"}
+	if len(lines) != len(want) {
+		t.Fatalf("ls empty: got %v, want %v", lines, want)
+	}
+	for i, l := range lines {
+		if l != want[i] {
+			t.Errorf("ls empty: got %v, want %v", lines, want)
+		}
+	}
+}
+
 func TestLsLimit500(t *testing.T) {
 	root := t.TempDir()
 	for i := 0; i < 600; i++ {
