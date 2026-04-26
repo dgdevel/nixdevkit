@@ -104,22 +104,14 @@ func main() {
 
 	s.AddTool(mcp.NewTool("ls",
 		mcp.WithDescription("List directory content"),
-		mcp.WithString("path",
-			mcp.Required(),
-			mcp.Description("Directory path"),
-		),
-	), lsHandler)
-
-	s.AddTool(mcp.NewTool("find",
-		mcp.WithDescription("Find files"),
 		mcp.WithString("pattern",
 			mcp.Required(),
 			mcp.Description("Glob expression"),
 		),
-	), findHandler)
+	), lsHandler)
 
 	s.AddTool(mcp.NewTool("cat-b",
-		mcp.WithDescription("Read a file with line numbers (like `cat -b`) (max 200 lines) (→ = tab, · = trailing space)"),
+		mcp.WithDescription("Read a file with line numbers (like `cat -b`) (max 500 lines) (→ = tab, · = trailing space)"),
 		mcp.WithString("path",
 			mcp.Required(),
 			mcp.Description("File path"),
@@ -155,7 +147,7 @@ func main() {
 	), mvHandler)
 
 	s.AddTool(mcp.NewTool("grep",
-		mcp.WithDescription("Print lines matching pattern"),
+		mcp.WithDescription("Print lines matching pattern with 3 context lines (→ = tab, · = trailing space)"),
 		mcp.WithString("pattern",
 			mcp.Required(),
 			mcp.Description("Regular expression"),

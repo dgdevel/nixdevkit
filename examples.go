@@ -27,40 +27,10 @@ func examplesHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToo
 }
 
 var toolExamples = map[string]string{
-	"ls": `Example 1: List root directory
+	"ls": `Example 1: List all .go files recursively
 
 Request:
   tool: ls
-  arguments: {"path": "/"}
-
-Response:
-  file1.txt
-  subdir/
-  README.md
-
-Example 2: List a subdirectory
-
-Request:
-  tool: ls
-  arguments: {"path": "/subdir"}
-
-Response:
-  nested.txt
-  another_dir/
-
-Example 3: Nonexistent directory returns error
-
-Request:
-  tool: ls
-  arguments: {"path": "/no_such_dir"}
-
-Response (error):
-  open /no_such_dir: no such file or directory`,
-
-	"find": `Example 1: Find all .go files recursively
-
-Request:
-  tool: find
   arguments: {"pattern": "**/*.go"}
 
 Response:
@@ -68,20 +38,20 @@ Response:
   server/handler.go
   server/routes.go
 
-Example 2: Find files in root only
+Example 2: List files in root only
 
 Request:
-  tool: find
+  tool: ls
   arguments: {"pattern": "*.txt"}
 
 Response:
   file1.txt
   notes.txt
 
-Example 3: Find directories
+Example 3: List directories
 
 Request:
-  tool: find
+  tool: ls
   arguments: {"pattern": "src*"}
 
 Response:
@@ -175,15 +145,18 @@ Request:
 Response (error):
   destination already exists`,
 
-	"grep": `Example 1: Simple pattern match
+	"grep": `Example 1: Simple pattern match with context
 
 Request:
   tool: grep
   arguments: {"pattern": "TODO", "pathspec": "*.go"}
 
 Response:
+  main.go:12:import os
+  main.go:13:
   main.go:14:// TODO: handle error
-  handler.go:7:// TODO: refactor
+  main.go:15:
+  main.go:16:func main() {
 
 Example 2: Regex pattern
 
@@ -192,8 +165,17 @@ Request:
   arguments: {"pattern": "^func ", "pathspec": "**/*.go"}
 
 Response:
-  main.go:5:func main() {
+  main.go:4:import (
+  main.go:5:
+  main.go:6:func main() {
+  main.go:7:	fmt.Println("hello")
+  main.go:8:}
+  --
+  handler.go:10:import (
+  handler.go:11:
   handler.go:12:func handle() error {
+  handler.go:13:	return nil
+  handler.go:14:}
 
 Example 3: No match returns empty string
 

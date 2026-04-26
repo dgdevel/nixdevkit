@@ -12,6 +12,16 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+func visibleLine(line string) string {
+	v := strings.ReplaceAll(line, "\t", "→")
+	v = strings.TrimRight(v, " ")
+	trailing := len(line) - len(strings.TrimRight(line, " "))
+	if trailing > 0 {
+		v += strings.Repeat("·", trailing)
+	}
+	return v
+}
+
 func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	pattern, err := req.RequireString("pattern")
 	if err != nil {
@@ -45,31 +55,104 @@ func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		}
 		return nil
 	})
-	var out []string
+
+	const ctxLines = 3
+
+	type matchBlock struct{ start, end int }
+	type fileResult struct {
+		rel    string
+		lines  []string
+		blocks []matchBlock
+	}
+
+	var results []fileResult
 	for _, f := range files {
 		rel, _ := filepath.Rel(rootDir, f)
 		fh, err := os.Open(f)
 		if err != nil {
 			continue
 		}
+		var lines []string
 		scanner := bufio.NewScanner(fh)
-		ln := 0
 		for scanner.Scan() {
-			ln++
-			if re.MatchString(scanner.Text()) {
-				out = append(out, fmt.Sprintf("%s:%d:%s", rel, ln, scanner.Text()))
-			}
+			lines = append(lines, scanner.Text())
 		}
 		fh.Close()
+
+		var matchNums []int
+		for i, line := range lines {
+			if re.MatchString(line) {
+				matchNums = append(matchNums, i)
+			}
+		}
+		if len(matchNums) == 0 {
+			continue
+		}
+
+		var blocks []matchBlock
+		bs, be := matchNums[0], matchNums[0]
+		for _, n := range matchNums[1:] {
+			if n <= be+2*ctxLines {
+				be = n
+			} else {
+				blocks = append(blocks, matchBlock{bs, be})
+				bs, be = n, n
+			}
+		}
+		blocks = append(blocks, matchBlock{bs, be})
+
+		results = append(results, fileResult{rel: rel, lines: lines, blocks: blocks})
 	}
-	if out == nil {
+
+	if len(results) == 0 {
 		return mcp.NewToolResultText(""), nil
 	}
-	var b strings.Builder
-	if len(out) > 200 {
-		b.WriteString("Output cut at 200 lines, refine the search pattern\n")
-		out = out[:200]
+
+	var allLines []string
+	for _, fr := range results {
+		for _, block := range fr.blocks {
+			if len(allLines) > 0 {
+				allLines = append(allLines, "--")
+			}
+			from := block.start - ctxLines
+			if from < 0 {
+				from = 0
+			}
+			to := block.end + ctxLines + 1
+			if to > len(fr.lines) {
+				to = len(fr.lines)
+			}
+			for i := from; i < to; i++ {
+				allLines = append(allLines, fmt.Sprintf("%s:%d:%s", fr.rel, i+1, visibleLine(fr.lines[i])))
+			}
+		}
 	}
-	b.WriteString(strings.Join(out, "\n"))
-	return mcp.NewToolResultText(b.String()), nil
+
+	var b strings.Builder
+	contentCount := 0
+	cut := false
+	pendingSep := false
+	for _, line := range allLines {
+		if line == "--" {
+			pendingSep = true
+			continue
+		}
+		if contentCount >= 500 {
+			cut = true
+			break
+		}
+		if pendingSep {
+			b.WriteString("--\n")
+			pendingSep = false
+		}
+		b.WriteString(line)
+		b.WriteByte('\n')
+		contentCount++
+	}
+
+	text := strings.TrimRight(b.String(), "\n")
+	if cut {
+		text = "Output cut at 500 lines, refine the search pattern\n" + text
+	}
+	return mcp.NewToolResultText(text), nil
 }

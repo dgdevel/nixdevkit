@@ -113,10 +113,10 @@ func TestCatBEscape(t *testing.T) {
 	}
 }
 
-func TestCatBLimit200(t *testing.T) {
+func TestCatBLimit500(t *testing.T) {
 	setupTestRoot(t)
 	var buf strings.Builder
-	for i := 0; i < 300; i++ {
+	for i := 0; i < 600; i++ {
 		if i > 0 {
 			buf.WriteByte('\n')
 		}
@@ -142,20 +142,19 @@ func TestCatBLimit200(t *testing.T) {
 		t.Fatal("cat-b returned error")
 	}
 	got := result.Content[0].(mcp.TextContent).Text
-	if !strings.HasPrefix(got, "Showing lines 1-200 of 300. Use line_range to read more.\n") {
+	if !strings.HasPrefix(got, "Showing lines 1-500 of 600. Use line_range to read more.\n") {
 		t.Errorf("expected cut prefix, got %q", got[:80])
 	}
 	lines := strings.Count(got, "\n")
-	// 1 cut header + 200 data lines
-	if lines != 201 {
-		t.Errorf("expected 201 lines (1 header + 200 data), got %d", lines)
+	if lines != 501 {
+		t.Errorf("expected 501 lines (1 header + 500 data), got %d", lines)
 	}
 }
 
-func TestCatBLimit200WithOffset(t *testing.T) {
+func TestCatBLimit500WithOffset(t *testing.T) {
 	setupTestRoot(t)
 	var buf strings.Builder
-	for i := 0; i < 300; i++ {
+	for i := 0; i < 600; i++ {
 		if i > 0 {
 			buf.WriteByte('\n')
 		}
@@ -181,7 +180,7 @@ func TestCatBLimit200WithOffset(t *testing.T) {
 		t.Fatal("cat-b returned error")
 	}
 	got := result.Content[0].(mcp.TextContent).Text
-	if !strings.HasPrefix(got, "Showing lines 50-249 of 300. Use line_range to read more.\n") {
+	if !strings.HasPrefix(got, "Showing lines 50-549 of 600. Use line_range to read more.\n") {
 		t.Errorf("expected cut prefix with offset 49, got %q", got[:80])
 	}
 }

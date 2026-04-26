@@ -12,7 +12,7 @@ All paths are virtual — `/` maps to the root directory. Path traversal is bloc
 
 - Default transport is stdio.
 - `--http` starts a streamable HTTP server on the given `--address` (default `localhost:8080`).
-- `--ignore` accepts a regular expression; files and directories whose relative path matches are hidden from all tools. Traversal tools (`find`, `grep`, `sed`) skip entire matched directories.
+- `--ignore` accepts a regular expression; files and directories whose relative path matches are hidden from all tools. Traversal tools (`ls`, `grep`, `sed`) skip entire matched directories.
 - `--show` accepts a comma-separated list of tool names to expose (whitelist). Only the listed tools are available. Mutually exclusive with `--hide`. Proxied tools (from `mcps.yml`) are always included regardless of this flag.
 - `--hide` accepts a comma-separated list of tool names to hide (blacklist). All other tools remain available. Mutually exclusive with `--show`. Proxied tools are always included regardless of this flag.
 - If no root directory is given, the current working directory is used.
@@ -32,17 +32,9 @@ Creates a new file. Errors if the file already exists.
 
 | Argument | Description |
 |----------|-------------|
-| `path` | Directory path |
-
-Returns newline-separated entries with full relative paths. Directories end with `/`.
-
-### `find` — Find files
-
-| Argument | Description |
-|----------|-------------|
 | `pattern` | Glob expression |
 
-Recursively walks the root. Supports `*` and `**` (globstar) syntax. Directories end with `/`.
+Recursively walks the root matching the glob pattern. Supports `*` and `**` (globstar) syntax. Directories end with `/`.
 
 ### `cat-b` — Read a file with line numbers (like `cat -b`)
 
@@ -51,7 +43,7 @@ Recursively walks the root. Supports `*` and `**` (globstar) syntax. Directories
 | `path` | File path |
 | `line_range` | Line range `[from]:[to]`, 0-indexed |
 
-Like `cat -b`: non-empty lines are prefixed with a right-aligned line number and a tab. Empty lines are printed without a number. Output is limited to 200 lines; if the range exceeds this, a header `Output cut at 200 lines starting from N` is emitted before the truncated output.
+Like `cat -b`: non-empty lines are prefixed with a right-aligned line number and a tab. Empty lines are printed without a number. Output is limited to 500 lines; if the range exceeds this, a header `Showing lines N-M of TOTAL` is emitted before the truncated output.
 
 ### `mv` — Move files
 
@@ -62,14 +54,14 @@ Like `cat -b`: non-empty lines are prefixed with a right-aligned line number and
 
 Moves a file or directory. Fails if destination already exists or source not found.
 
-### `grep` — Print lines matching pattern
+### `grep` — Print lines matching pattern with context
 
 | Argument | Description |
 |----------|-------------|
 | `pattern` | Regular expression |
 | `pathspec` | Glob expression for file names |
 
-Output format: `filepath:linenumber:linecontent`. Supports `**` globstar. Line numbers are 1-indexed.
+Output format: `filepath:linenumber:linecontent`. Shows 3 context lines before and after each match. Non-adjacent match groups are separated by `--`. Supports `**` globstar. Line numbers are 1-indexed. Tabs are shown as `→` and trailing spaces as `·`. Output is limited to 500 content lines.
 
 ### `sed` — Search and replace in files
 

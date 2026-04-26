@@ -39,9 +39,9 @@ func catbHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 	}
 	var b strings.Builder
 	requested := to - from
-	if requested > 200 {
-		fmt.Fprintf(&b, "Showing lines %d-%d of %d. Use line_range to read more.\n", from+1, from+200, len(lines))
-		to = from + 200
+	if requested > 500 {
+		fmt.Fprintf(&b, "Showing lines %d-%d of %d. Use line_range to read more.\n", from+1, from+500, len(lines))
+		to = from + 500
 	}
 	for i, line := range lines[from:to] {
 		if line == "" {

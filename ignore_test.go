@@ -63,7 +63,7 @@ func TestLsIgnore(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"path": "/",
+				"pattern": "**",
 			},
 		},
 	}
@@ -80,18 +80,18 @@ func TestLsIgnore(t *testing.T) {
 	}
 }
 
-func TestFindIgnoreDir(t *testing.T) {
+func TestLsIgnoreDir(t *testing.T) {
 	setupIgnoreTest(t, `^node_modules`)
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "find",
+			Name: "ls",
 			Arguments: map[string]interface{}{
 				"pattern": "**",
 			},
 		},
 	}
-	result, err := findHandler(context.Background(), req)
+	result, err := lsHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func TestFindIgnoreDir(t *testing.T) {
 	}
 	text := textOf(t, result)
 	if strings.Contains(text, "node_modules") {
-		t.Errorf("find should skip ignored directory and its contents, got: %s", text)
+		t.Errorf("ls should skip ignored directory and its contents, got: %s", text)
 	}
 }
 

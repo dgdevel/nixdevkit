@@ -45,20 +45,6 @@ func assertNoLeak(t *testing.T, result *mcp.CallToolResult, root string) {
 	}
 }
 
-func TestLsErrorMasksPath(t *testing.T) {
-	root := setupTestRoot(t)
-	req := mcp.CallToolRequest{
-		Params: mcp.CallToolParams{
-			Name: "ls",
-			Arguments: map[string]interface{}{
-				"path": "/nonexistent",
-			},
-		},
-	}
-	result, _ := lsHandler(context.Background(), req)
-	assertNoLeak(t, result, root)
-}
-
 func TestReadErrorMasksPath(t *testing.T) {
 	root := setupTestRoot(t)
 	req := mcp.CallToolRequest{

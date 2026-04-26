@@ -10,30 +10,52 @@ import (
 )
 
 func lsHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	p, err := req.RequireString("path")
+	pattern, err := req.RequireString("pattern")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	abs, err := resolve(p)
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
-	}
-	entries, err := os.ReadDir(abs)
+	var matches []string
+	err = filepath.WalkDir(rootDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if isConfigPath(path) {
+			return nil
+		}
+		if isIgnored(path) {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		rel, err := filepath.Rel(rootDir, path)
+		if err != nil {
+			return nil
+		}
+		if rel == "." {
+			return nil
+		}
+		if !globMatch(pattern, rel) {
+			return nil
+		}
+		name := rel
+		if d.IsDir() {
+			name += "/"
+		}
+		matches = append(matches, name)
+		return nil
+	})
 	if err != nil {
 		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
-	rel, _ := filepath.Rel(rootDir, abs)
-	names := make([]string, 0, len(entries))
-	for _, e := range entries {
-		fullPath := filepath.Join(abs, e.Name())
-		if isConfigPath(fullPath) || isIgnored(fullPath) {
-			continue
-		}
-		n := filepath.Join(rel, e.Name())
-		if e.IsDir() {
-			n += "/"
-		}
-		names = append(names, n)
+	if matches == nil {
+		return mcp.NewToolResultText(""), nil
 	}
-	return mcp.NewToolResultText(strings.Join(names, "\n")), nil
+	var b strings.Builder
+	if len(matches) > 500 {
+		b.WriteString("Output cut at 500 lines, refine the search pattern\n")
+		matches = matches[:500]
+	}
+	b.WriteString(strings.Join(matches, "\n"))
+	return mcp.NewToolResultText(b.String()), nil
 }
