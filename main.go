@@ -111,7 +111,7 @@ func main() {
 	), lsHandler)
 
 	s.AddTool(mcp.NewTool("cat-b",
-		mcp.WithDescription("Read a file with line numbers (like `cat -b`) (max 500 lines) (→ = tab, · = trailing space)"),
+		mcp.WithDescription("Read a file with line numbers (like `cat -b`, max 500 lines, → = tab, · = trailing space)"),
 		mcp.WithString("path",
 			mcp.Required(),
 			mcp.Description("File path"),
