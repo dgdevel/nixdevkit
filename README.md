@@ -343,3 +343,49 @@ For each tool entry:
 Only tools explicitly listed in the `tools` map are proxied. Other tools from the upstream server are ignored.
 
 Proxied tools are excluded from `--show`/`--hide` filtering — they are always visible.
+
+## Code Indexer
+
+nixdevkit includes an optional code indexer that provides semantic code search using local embedding and reranking models powered by llama.cpp. It runs as a child process of the main nixdevkit server.
+
+### Setup
+
+```
+./nixdevkit-setup-indexer [rootdirectory]
+```
+
+Downloads llama.cpp (CPU-only x86_64), an embedding model (nomic-embed-text-v1.5 Q4_K_M) and a reranking model (bge-reranker-v2-m3 Q4_K_M), then writes the configuration to `.nixdevkit/config.ini`.
+
+### First-time indexing
+
+The initial index can take several minutes depending on project size. It is recommended to warm up the index before launching the MCP server:
+
+```
+echo "reindex" | ./nixdevkit-indexer [rootdirectory]
+```
+
+Wait for the `ok` response, then start the MCP server with `--enable-indexer`. Subsequent startups will only index changed files (incremental via mtime tracking).
+
+### `relevant_code` — Semantic code search
+
+| Argument | Description |
+|----------|-------------|
+| `prompt` | Description of the code you are looking for |
+
+Requires `--enable-indexer`. Returns one result per line in the format:
+
+```
+file_path:line_start-line_end:language:chunk_type:signature
+```
+
+Use `cat-b` with the reported line range to read the actual code. Returns an empty string if the indexer is not ready or no results are found.
+
+### Configuration
+
+The indexer reads from the `[llama]` section of `.nixdevkit/config.ini`:
+
+| Key | Description |
+|-----|-------------|
+| `llama.path` | Path to `llama-server` binary (may include extra flags) |
+| `llama.embedder` | HuggingFace repo ID for the embedding model |
+| `llama.reranker` | HuggingFace repo ID for the reranking model |

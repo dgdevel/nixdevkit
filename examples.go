@@ -695,4 +695,32 @@ Request:
 Response:
   Example 1: Create a top-level task
   ...`,
+
+	"relevant_code": `Example 1: Find authentication-related code
+
+Request:
+  tool: relevant_code
+  arguments: {"prompt": "user authentication and login logic"}
+
+Response:
+  auth/handler.go:45-82:go:function:func (h *Handler) Login(w http.ResponseWriter, r *http.Request)
+  auth/middleware.go:12-38:go:function:func Authenticate(next http.Handler) http.Handler
+
+Example 2: No relevant code found returns empty string
+
+Request:
+  tool: relevant_code
+  arguments: {"prompt": "quantum entanglement simulation"}
+
+Response:
+  (empty string)
+
+Example 3: Indexer still indexing returns empty string
+
+Request:
+  tool: relevant_code
+  arguments: {"prompt": "database connection pool"}
+
+Response:
+  (empty string)`,
 }

@@ -17,12 +17,13 @@ import (
 
 func main() {
 	var (
-		stdio     bool
-		http      bool
-		addr      string
-		ignore    string
-		showTools string
-		hideTools string
+		stdio          bool
+		http           bool
+		addr           string
+		ignore         string
+		showTools      string
+		hideTools      string
+		enableIndexer  bool
 	)
 	{
 		stdioF := flag.Bool("stdio", false, "use stdio transport")
@@ -31,8 +32,9 @@ func main() {
 		ignoreF := flag.String("ignore", "", "regex pattern to ignore files/directories")
 		showF := flag.String("show", "", "comma-separated whitelist of tool names (mutually exclusive with -hide)")
 		hideF := flag.String("hide", "", "comma-separated blacklist of tool names (mutually exclusive with -show)")
+		indexerF := flag.Bool("enable-indexer", false, "start code indexer subprocess")
 		flag.Parse()
-		stdio, http, addr, ignore, showTools, hideTools = *stdioF, *httpF, *addrF, *ignoreF, *showF, *hideF
+		stdio, http, addr, ignore, showTools, hideTools, enableIndexer = *stdioF, *httpF, *addrF, *ignoreF, *showF, *hideF, *indexerF
 	}
 
 	if showTools != "" && hideTools != "" {
@@ -304,6 +306,20 @@ func main() {
 			mcp.Description("Timeout in seconds"),
 		),
 	), runCommandHandler)
+
+	if enableIndexer {
+		if err := startIndexer(rootDir); err != nil {
+			fmt.Fprintf(os.Stderr, "nixdevkit: indexer: %v\n", err)
+		} else {
+			s.AddTool(mcp.NewTool("relevant_code",
+				mcp.WithDescription("Find code relevant to a prompt using semantic search and reranking. Returns one result per line in the format: file_path:line_start-line_end:language:chunk_type:signature. Use cat-b to read the actual code at those lines."),
+				mcp.WithString("prompt",
+					mcp.Required(),
+					mcp.Description("Description of the code you are looking for"),
+				),
+			), relevantCodeHandler)
+		}
+	}
 
 	mcpsCfg, err := mcps.LoadConfig(mcps.ConfigPath(rootDir))
 	if err != nil {
