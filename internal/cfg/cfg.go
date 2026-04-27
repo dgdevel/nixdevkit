@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -91,4 +92,24 @@ func IsReadonly(rootDir string) bool {
 		return ParseBool(core["readonly"])
 	}
 	return false
+}
+
+func IsDisabled(val string) bool {
+	switch strings.ToLower(val) {
+	case "false", "0", "no", "disabled", "off":
+		return true
+	default:
+		return false
+	}
+}
+
+func Atoi(val string, defaultVal int) int {
+	if val == "" {
+		return defaultVal
+	}
+	n, err := strconv.Atoi(val)
+	if err != nil {
+		return defaultVal
+	}
+	return n
 }

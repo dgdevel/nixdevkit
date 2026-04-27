@@ -48,6 +48,10 @@ type Indexer struct {
 	store    *Store
 	watcher  *fsnotify.Watcher
 
+	searchCount     int
+	resultCount     int
+	rerankerEnabled bool
+
 	manifest   map[string]string
 	manifestMu sync.Mutex
 }
@@ -82,9 +86,19 @@ func (idx *Indexer) Start() error {
 	}
 
 	embedderRepo := llamaCfg["embedder"]
-	rerankerRepo := llamaCfg["reranker"]
-	if embedderRepo == "" || rerankerRepo == "" {
-		return fmt.Errorf("missing llama.embedder or llama.reranker config")
+	if embedderRepo == "" {
+		return fmt.Errorf("missing llama.embedder config")
+	}
+
+	idx.rerankerEnabled = !cfg.IsDisabled(llamaCfg["reranker_enabled"])
+	idx.searchCount = cfg.Atoi(llamaCfg["search_count"], 50)
+	idx.resultCount = cfg.Atoi(llamaCfg["result_count"], 10)
+
+	if idx.rerankerEnabled {
+		rerankerRepo := llamaCfg["reranker"]
+		if rerankerRepo == "" {
+			return fmt.Errorf("missing llama.reranker config")
+		}
 	}
 
 	t := time.Now()
@@ -95,13 +109,18 @@ func (idx *Indexer) Start() error {
 	}
 	fmt.Fprintf(os.Stderr, "[INFO] Embedder on port %d (started in %s)\n", idx.embedder.port, time.Since(t).Round(time.Millisecond))
 
-	t = time.Now()
-	fmt.Fprintf(os.Stderr, "[INFO] Starting reranker server...\n")
-	idx.reranker, err = StartServer(idx.ctx, llamaPath, rerankerRepo, "--reranking")
-	if err != nil {
-		return fmt.Errorf("starting reranker: %w", err)
+	if idx.rerankerEnabled {
+		rerankerRepo := llamaCfg["reranker"]
+		t = time.Now()
+		fmt.Fprintf(os.Stderr, "[INFO] Starting reranker server...\n")
+		idx.reranker, err = StartServer(idx.ctx, llamaPath, rerankerRepo, "--reranking")
+		if err != nil {
+			return fmt.Errorf("starting reranker: %w", err)
+		}
+		fmt.Fprintf(os.Stderr, "[INFO] Reranker on port %d (started in %s)\n", idx.reranker.port, time.Since(t).Round(time.Millisecond))
+	} else {
+		fmt.Fprintf(os.Stderr, "[INFO] Reranker disabled\n")
 	}
-	fmt.Fprintf(os.Stderr, "[INFO] Reranker on port %d (started in %s)\n", idx.reranker.port, time.Since(t).Round(time.Millisecond))
 
 	embedFn := func(ctx context.Context, text string) ([]float32, error) {
 		return idx.embedder.GetEmbeddingOpenAI(ctx, text)
@@ -173,7 +192,7 @@ func (idx *Indexer) HandleRetrieve(query string) ([]RetrieveResult, error) {
 		return nil, fmt.Errorf("embedding query: %w", err)
 	}
 
-	candidates, err := idx.store.Search(idx.ctx, emb, 50)
+	candidates, err := idx.store.Search(idx.ctx, emb, idx.searchCount)
 	if err != nil {
 		return nil, fmt.Errorf("searching: %w", err)
 	}
@@ -182,15 +201,17 @@ func (idx *Indexer) HandleRetrieve(query string) ([]RetrieveResult, error) {
 		return nil, nil
 	}
 
-	docs := make([]string, len(candidates))
-	for i, c := range candidates {
-		docs[i] = c.Signature + "\n" + c.Content
-	}
-
-	rerankResults, err := idx.reranker.Rerank(idx.ctx, query, docs)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "[WARN] Reranking failed, using similarity scores: %v\n", err)
-		rerankResults = nil
+	var rerankResults []RerankResult
+	if idx.rerankerEnabled {
+		docs := make([]string, len(candidates))
+		for i, c := range candidates {
+			docs[i] = c.Signature + "\n" + c.Content
+		}
+		rerankResults, err = idx.reranker.Rerank(idx.ctx, query, docs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "[WARN] Reranking failed, using similarity scores: %v\n", err)
+			rerankResults = nil
+		}
 	}
 
 	results := make([]RetrieveResult, len(candidates))
@@ -221,8 +242,8 @@ func (idx *Indexer) HandleRetrieve(query string) ([]RetrieveResult, error) {
 		sortResults(results)
 	}
 
-	if len(results) > 10 {
-		results = results[:10]
+	if len(results) > idx.resultCount {
+		results = results[:idx.resultCount]
 	}
 
 	return results, nil
