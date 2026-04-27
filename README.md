@@ -388,4 +388,7 @@ The indexer reads from the `[llama]` section of `.nixdevkit/config.ini`:
 |-----|-------------|
 | `llama.path` | Path to `llama-server` binary (may include extra flags) |
 | `llama.embedder` | HuggingFace repo ID for the embedding model |
-| `llama.reranker` | HuggingFace repo ID for the reranking model |
+| `llama.reranker` | HuggingFace repo ID for the reranking model (not required when `llama.reranker_enabled` is `false`) |
+| `llama.search_count` | Number of documents retrieved from the vector database (default: `50`) |
+| `llama.result_count` | Number of final results returned after reranking (default: `10`) |
+| `llama.reranker_enabled` | Set to `false`, `0`, `no`, `disabled`, or `off` to skip the reranker entirely. When disabled, results are scored by vector similarity only and the reranker server is not started (default: `true`) |
