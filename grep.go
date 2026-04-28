@@ -12,16 +12,6 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-func visibleLine(line string) string {
-	v := strings.ReplaceAll(line, "\t", "→")
-	v = strings.TrimRight(v, " ")
-	trailing := len(line) - len(strings.TrimRight(line, " "))
-	if trailing > 0 {
-		v += strings.Repeat("·", trailing)
-	}
-	return v
-}
-
 func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	pattern, err := req.RequireString("pattern")
 	if err != nil {
@@ -123,7 +113,7 @@ func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 				to = len(fr.lines)
 			}
 			for i := from; i < to; i++ {
-				allLines = append(allLines, fmt.Sprintf("%s:%d:%s", fr.rel, i+1, visibleLine(fr.lines[i])))
+				allLines = append(allLines, fmt.Sprintf("%s:%d:%s", fr.rel, i+1, fr.lines[i]))
 			}
 		}
 	}

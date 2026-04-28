@@ -71,7 +71,7 @@ Moves a file or directory. Fails if destination already exists or source not fou
 | `pattern` | Regular expression |
 | `pathspec` | Glob expression for file names |
 
-Output format: `filepath:linenumber:linecontent`. Shows 3 context lines before and after each match. Non-adjacent match groups are separated by `--`. Supports `**` globstar. Line numbers are 1-indexed. Tabs are shown as `→` and trailing spaces as `·`. Output is limited to 500 content lines.
+Output format: `filepath:linenumber:linecontent`. Shows 3 context lines before and after each match. Non-adjacent match groups are separated by `--`. Supports `**` globstar. Line numbers are 1-indexed. Output is limited to 500 content lines.
 
 ### `sed` — Search and replace in files
 

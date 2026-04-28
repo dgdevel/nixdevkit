@@ -204,11 +204,11 @@ func TestGrepVisualTab(t *testing.T) {
 		t.Fatal("grep returned error")
 	}
 	text := textOf(t, result)
-	if !strings.Contains(text, "a→b") {
-		t.Errorf("expected tab replacement in context line, got %q", text)
+	if !strings.Contains(text, "a\tb") {
+		t.Errorf("expected raw tab in context line, got %q", text)
 	}
-	if !strings.Contains(text, "match→c") {
-		t.Errorf("expected tab replacement in match line, got %q", text)
+	if !strings.Contains(text, "match\tc") {
+		t.Errorf("expected raw tab in match line, got %q", text)
 	}
 }
 
@@ -234,7 +234,7 @@ func TestGrepVisualTrailingSpace(t *testing.T) {
 		t.Fatal("grep returned error")
 	}
 	text := textOf(t, result)
-	if !strings.Contains(text, "match···") {
-		t.Errorf("expected trailing space replacement, got %q", text)
+	if !strings.Contains(text, "match   ") {
+		t.Errorf("expected raw trailing spaces, got %q", text)
 	}
 }

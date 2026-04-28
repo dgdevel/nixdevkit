@@ -149,7 +149,7 @@ func main() {
 	), mvHandler)
 
 	s.AddTool(mcp.NewTool("grep",
-		mcp.WithDescription("Print lines matching pattern with 3 context lines (→ = tab, · = trailing space)"),
+		mcp.WithDescription("Print lines matching pattern with 3 context lines"),
 		mcp.WithString("pattern",
 			mcp.Required(),
 			mcp.Description("Regular expression"),
