@@ -32,7 +32,7 @@ Creates a new file. Errors if the file already exists.
 
 | Argument | Description |
 |----------|-------------|
-| `pattern` | Glob expression |
+| `pathspec` | Glob expression for file names |
 
 Recursively walks the root matching the glob pattern. Supports `*` and `**` (globstar) syntax. Directories end with `/`.
 
@@ -92,7 +92,7 @@ In-place match and replace (no capturing groups). Returns list of changed files.
 
 Output is compatible with the `patch` tool. Returns empty string if files are identical.
 
-### `diff_strings` — Unified diff from two strings
+### `diff_strings` — Helper that format unified diff from two strings
 
 | Argument | Description |
 |----------|-------------|

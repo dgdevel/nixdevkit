@@ -60,7 +60,7 @@ func freadHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 		if end > len(selected) {
 			end = len(selected)
 		}
-		fmt.Fprintf(&b, "----- %s - line from %d to %d -----\n", p, from+i+1, from+end)
+		fmt.Fprintf(&b, "----- %s - lines from %d to %d -----\n", p, from+i+1, from+end)
 		for _, line := range selected[i:end] {
 			b.WriteString(line)
 			b.WriteByte('\n')

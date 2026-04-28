@@ -63,7 +63,7 @@ func TestLsIgnore(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "**",
+				"pathspec": "**",
 			},
 		},
 	}
@@ -87,7 +87,7 @@ func TestLsIgnoreDir(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "**",
+				"pathspec": "**",
 			},
 		},
 	}
@@ -132,8 +132,8 @@ func TestGrepIgnore(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "grep",
 			Arguments: map[string]interface{}{
-				"pattern":  "js",
-				"pathspec": "**",
+				"pattern":   "js",
+				"pathspec":  "**",
 			},
 		},
 	}

@@ -19,7 +19,7 @@ func TestLsStarGlob(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "*.txt",
+				"pathspec": "*.txt",
 			},
 		},
 	}
@@ -43,7 +43,7 @@ func TestLsGlobstar(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "**/*.txt",
+				"pathspec": "**/*.txt",
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func TestLsDir(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "sub*",
+				"pathspec": "sub*",
 			},
 		},
 	}
@@ -98,7 +98,7 @@ func TestLsNoMatch(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "*.xyz",
+				"pathspec": "*.xyz",
 			},
 		},
 	}
@@ -121,7 +121,7 @@ func TestLsDotPattern(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": ".",
+				"pathspec": ".",
 			},
 		},
 	}
@@ -152,7 +152,7 @@ func TestLsEmptyPattern(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "",
+				"pathspec": "",
 			},
 		},
 	}
@@ -183,7 +183,7 @@ func TestLsDirectoryWithSlash(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "subdir/",
+				"pathspec": "subdir/",
 			},
 		},
 	}
@@ -207,7 +207,7 @@ func TestLsDirectoryWithoutSlash(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "subdir",
+				"pathspec": "subdir",
 			},
 		},
 	}
@@ -235,7 +235,7 @@ func TestLsLimit500(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "ls",
 			Arguments: map[string]interface{}{
-				"pattern": "*.txt",
+				"pathspec": "*.txt",
 			},
 		},
 	}

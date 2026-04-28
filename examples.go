@@ -31,7 +31,7 @@ var toolExamples = map[string]string{
 
 Request:
   tool: ls
-  arguments: {"pattern": "**/*.go"}
+  arguments: {"pathspec": "**/*.go"}
 
 Response:
   main.go
@@ -42,7 +42,7 @@ Example 2: List files in root only
 
 Request:
   tool: ls
-  arguments: {"pattern": "*.txt"}
+  arguments: {"pathspec": "*.txt"}
 
 Response:
   file1.txt
@@ -52,7 +52,7 @@ Example 3: List directories
 
 Request:
   tool: ls
-  arguments: {"pattern": "src*"}
+  arguments: {"pathspec": "src*"}
 
 Response:
   src/`,
@@ -64,7 +64,7 @@ Request:
   arguments: {"path": "/main.go", "line_range": ":"}
 
 Response:
-  ----- /main.go - line from 1 to 4 -----
+  ----- /main.go - lines from 1 to 4 -----
   package main
 
   func main() {
@@ -72,14 +72,14 @@ Response:
   }
   ----- /main.go - EOF -----
 
-Example 2: Read a specific line range (lines 3-5, 0-indexed)
+Example 2: Read a specific line range (lines 3-5, 1-indexed)
 
 Request:
   tool: fread
   arguments: {"path": "/main.go", "line_range": "2:5"}
 
 Response:
-  ----- /main.go - line from 3 to 5 -----
+  ----- /main.go - lines from 3 to 5 -----
   func main() {
   	fmt.Println("hello")
   }
@@ -92,11 +92,11 @@ Request:
   arguments: {"path": "/bigfile.go", "line_range": ":"}
 
 Response:
-  ----- /bigfile.go - line from 1 to 30 -----
+  ----- /bigfile.go - lines from 1 to 30 -----
   (30 lines of raw content)
-  ----- /bigfile.go - line from 31 to 60 -----
+  ----- /bigfile.go - lines from 31 to 60 -----
   (next 30 lines)
-  ----- /bigfile.go - line from 61 to 75 -----
+  ----- /bigfile.go - lines from 61 to 75 -----
   (final lines)
   ----- /bigfile.go - EOF -----`,
 

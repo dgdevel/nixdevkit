@@ -106,9 +106,9 @@ func main() {
 
 	s.AddTool(mcp.NewTool("ls",
 		mcp.WithDescription("List directory content"),
-		mcp.WithString("pattern",
+		mcp.WithString("pathspec",
 			mcp.Required(),
-			mcp.Description("Glob expression"),
+			mcp.Description("Glob expression for file names"),
 		),
 	), lsHandler)
 
@@ -189,7 +189,7 @@ func main() {
 	), diffHandler)
 
 	s.AddTool(mcp.NewTool("diff_strings",
-		mcp.WithDescription("Unified diff from two strings"),
+		mcp.WithDescription("Helper that format unified diff from two strings"),
 		mcp.WithString("string1",
 			mcp.Required(),
 			mcp.Description("First string"),

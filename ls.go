@@ -10,19 +10,19 @@ import (
 )
 
 func lsHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	pattern, err := req.RequireString("pattern")
+	pathspec, err := req.RequireString("pathspec")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	if pattern == "" || pattern == "." {
-		pattern = "*"
+	if pathspec == "" || pathspec == "." {
+		pathspec = "*"
 	} else {
-		dirRef := strings.TrimSuffix(pattern, "/")
+		dirRef := strings.TrimSuffix(pathspec, "/")
 		if !strings.ContainsAny(dirRef, "*?[") {
 			abs, rErr := resolve(dirRef)
 			if rErr == nil {
 				if info, sErr := os.Stat(abs); sErr == nil && info.IsDir() {
-					pattern = dirRef + "/*"
+					pathspec = dirRef + "/*"
 				}
 			}
 		}
@@ -48,7 +48,7 @@ func lsHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResul
 		if rel == "." {
 			return nil
 		}
-		if !globMatch(pattern, rel) {
+		if !globMatch(pathspec, rel) {
 			return nil
 		}
 		name := rel
