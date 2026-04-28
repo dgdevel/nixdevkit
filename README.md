@@ -41,7 +41,7 @@ Recursively walks the root matching the glob pattern. Supports `*` and `**` (glo
 | Argument | Description |
 |----------|-------------|
 | `path` | File to read |
-| `line_range` | Line range `[from]:[to]`, 0-indexed |
+| `line_range` | Line range `[from]:[to]`, 1-indexed |
 
 Reads a file and outputs the raw content in blocks, with no transformation (no line numbers, no tab/trailing-space visualization). Output is split into blocks of 30 lines (configurable via `core.fread_block_size`). Each block is preceded by a header:
 

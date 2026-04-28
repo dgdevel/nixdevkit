@@ -132,7 +132,7 @@ func main() {
 		),
 		mcp.WithString("line_range",
 			mcp.Required(),
-			mcp.Description("Line range [from]:[to], 0-indexed"),
+			mcp.Description("Line range [from]:[to], 1-indexed"),
 		),
 	), freadHandler)
 

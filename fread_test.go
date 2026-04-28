@@ -253,3 +253,88 @@ func TestFreadNestedPath(t *testing.T) {
 		t.Errorf("fread nested: got %q, want %q", got, want)
 	}
 }
+
+func TestFreadGrepCompatibility(t *testing.T) {
+	setupTestRoot(t)
+	content := "alpha\nbeta\ngamma\ndelta\ngamma\nepsilon"
+	os.WriteFile(filepath.Join(rootDir, "grepcompat.txt"), []byte(content), 0644)
+
+	grepResult, err := grepHandler(context.Background(), mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: "grep",
+			Arguments: map[string]interface{}{
+				"pattern":  "gamma",
+				"pathspec": "grepcompat.txt",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if grepResult.IsError {
+		t.Fatal("grep returned error")
+	}
+	grepText := textOf(t, grepResult)
+	grepLines := strings.Split(grepText, "\n")
+
+	for _, gl := range grepLines {
+		parts := strings.SplitN(gl, ":", 3)
+		if len(parts) != 3 {
+			t.Fatalf("unexpected grep output line: %q", gl)
+		}
+		grepPath := "/" + parts[0]
+		lineNum := parts[1]
+		grepContent := parts[2]
+
+		freadResult, err := freadHandler(context.Background(), freadReq(grepPath, lineNum+":"+lineNum))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if freadResult.IsError {
+			t.Fatalf("fread returned error for path=%s range=%s:%s", grepPath, lineNum, lineNum)
+		}
+		freadText := textOf(t, freadResult)
+
+		blockHeader := fmt.Sprintf("----- %s - line from %s to %s -----\n", grepPath, lineNum, lineNum)
+		if !strings.HasPrefix(freadText, blockHeader) {
+			t.Errorf("fread block header mismatch: got %q, want prefix %q", freadText, blockHeader)
+		}
+
+		freadLine := strings.TrimPrefix(freadText, blockHeader)
+		freadLine = strings.TrimSuffix(freadLine, "\n----- "+grepPath+" - EOF -----\n")
+
+		if freadLine != grepContent {
+			t.Errorf("line %s: fread=%q grep=%q (path=%s)", lineNum, freadLine, grepContent, grepPath)
+		}
+	}
+}
+
+func TestFread1Indexed(t *testing.T) {
+	setupTestRoot(t)
+
+	result, err := freadHandler(context.Background(), freadReq("/file1.txt", "1:1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("fread returned error")
+	}
+	want := "----- /file1.txt - line from 1 to 1 -----\nhello\n----- /file1.txt - EOF -----\n"
+	got := result.Content[0].(mcp.TextContent).Text
+	if got != want {
+		t.Errorf("fread 1-indexed line 1: got %q, want %q", got, want)
+	}
+
+	result, err = freadHandler(context.Background(), freadReq("/file1.txt", "3:3"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("fread returned error")
+	}
+	want = "----- /file1.txt - line from 3 to 3 -----\nfoo\n----- /file1.txt - EOF -----\n"
+	got = result.Content[0].(mcp.TextContent).Text
+	if got != want {
+		t.Errorf("fread 1-indexed line 3: got %q, want %q", got, want)
+	}
+}
