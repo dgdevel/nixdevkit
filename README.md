@@ -55,15 +55,6 @@ At the end, an EOF marker is emitted:
 ----- $path - EOF -----
 ```
 
-### `cat-b` — Read a file with line numbers (like `cat -b`)
-
-| Argument | Description |
-|----------|-------------|
-| `path` | File path |
-| `line_range` | Line range `[from]:[to]`, 0-indexed |
-
-Like `cat -b`: non-empty lines are prefixed with a right-aligned line number and a tab. Empty lines are printed without a number. Output is limited to 500 lines; if the range exceeds this, a header `Showing lines N-M of TOTAL` is emitted before the truncated output.
-
 ### `mv` — Move files
 
 | Argument | Description |
@@ -401,7 +392,7 @@ Requires `--enable-indexer`. Returns one result per line in the format:
 file_path:line_start-line_end:language:chunk_type:signature
 ```
 
-Use `cat-b` with the reported line range to read the actual code. Returns an empty string if the indexer is not ready or no results are found.
+Use `fread` with the reported line range to read the actual code. Returns an empty string if the indexer is not ready or no results are found.
 
 ### Configuration
 

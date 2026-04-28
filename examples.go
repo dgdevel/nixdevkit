@@ -57,40 +57,6 @@ Request:
 Response:
   src/`,
 
-	"cat-b": `Example 1: Read full file with line numbers
-
-Request:
-  tool: cat-b
-  arguments: {"path": "/main.go", "line_range": ":"}
-
-Response:
-         1	package main
-       2
-       3	func main() {
-       4		fmt.Println("hello")
-       5	}
-
-Example 2: Read a specific line range (lines 3-5, 0-indexed)
-
-Request:
-  tool: cat-b
-  arguments: {"path": "/main.go", "line_range": "2:5"}
-
-Response:
-       3	func main() {
-       4		fmt.Println("hello")
-       5	}
-
-Example 3: Empty lines are printed without a number
-
-Request:
-  tool: cat-b
-  arguments: {"path": "/data.txt", "line_range": ":"}
-
-Response:
-       1	first line
-       2	third line`,
-
 	"fread": `Example 1: Read full file
 
 Request:
@@ -727,7 +693,7 @@ Request:
   arguments: {"tool_name": "nonexistent"}
 
 Response (error):
-  unknown tool "nonexistent". Available: cat-b, diff, ...
+  unknown tool "nonexistent". Available: diff, fread, ...
 
 Example 3: Get examples for task tools
 

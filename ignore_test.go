@@ -109,14 +109,14 @@ func TestReadIgnored(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "cat-b",
+			Name: "fread",
 			Arguments: map[string]interface{}{
 				"path":       "node_modules/pkg/index.js",
-				"line_range": "0:",
+				"line_range": ":",
 			},
 		},
 	}
-	result, err := catbHandler(context.Background(), req)
+	result, err := freadHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}

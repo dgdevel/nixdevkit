@@ -112,18 +112,6 @@ func main() {
 		),
 	), lsHandler)
 
-	s.AddTool(mcp.NewTool("cat-b",
-		mcp.WithDescription("Read a file with line numbers (like `cat -b`, max 500 lines, → = tab, · = trailing space)"),
-		mcp.WithString("path",
-			mcp.Required(),
-			mcp.Description("File path"),
-		),
-		mcp.WithString("line_range",
-			mcp.Required(),
-			mcp.Description("Line range [from]:[to], 0-indexed"),
-		),
-	), catbHandler)
-
 	s.AddTool(mcp.NewTool("fread",
 		mcp.WithDescription("Read file content"),
 		mcp.WithString("path",
@@ -324,7 +312,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "nixdevkit: indexer: %v\n", err)
 		} else {
 			s.AddTool(mcp.NewTool("relevant_code",
-				mcp.WithDescription("Find code relevant to a prompt using semantic search and reranking. Returns one result per line in the format: file_path:line_start-line_end:language:chunk_type:signature. Use cat-b to read the actual code at those lines."),
+				mcp.WithDescription("Find code relevant to a prompt using semantic search and reranking. Returns one result per line in the format: file_path:line_start-line_end:language:chunk_type:signature. Use fread to read the actual code at those lines."),
 				mcp.WithString("prompt",
 					mcp.Required(),
 					mcp.Description("Description of the code you are looking for"),
