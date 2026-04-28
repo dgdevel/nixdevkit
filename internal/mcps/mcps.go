@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	"nixdevkit/internal/cfg"
+
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/client/transport"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -39,6 +41,14 @@ func ConfigPath(rootDir string) string {
 	return rootDir + "/.nixdevkit/mcps.yml"
 }
 
+func GlobalConfigPath() string {
+	dp := cfg.GlobalDirPath()
+	if dp == "" {
+		return ""
+	}
+	return dp + "/mcps.yml"
+}
+
 func LoadConfig(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -47,11 +57,36 @@ func LoadConfig(path string) (*Config, error) {
 		}
 		return nil, err
 	}
-	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	var c Config
+	if err := yaml.Unmarshal(data, &c); err != nil {
 		return nil, fmt.Errorf("parse mcps config: %w", err)
 	}
-	return &cfg, nil
+	return &c, nil
+}
+
+func LoadMergedConfig(rootDir string) (*Config, error) {
+	globalPath := GlobalConfigPath()
+	globalCfg, _ := LoadConfig(globalPath)
+
+	localPath := ConfigPath(rootDir)
+	localCfg, _ := LoadConfig(localPath)
+
+	if globalCfg == nil && localCfg == nil {
+		return nil, nil
+	}
+
+	merged := &Config{MCPS: make(map[string]ServerConfig)}
+	if globalCfg != nil {
+		for k, v := range globalCfg.MCPS {
+			merged.MCPS[k] = v
+		}
+	}
+	if localCfg != nil {
+		for k, v := range localCfg.MCPS {
+			merged.MCPS[k] = v
+		}
+	}
+	return merged, nil
 }
 
 func RegisterProxiedTools(ctx context.Context, srv *server.MCPServer, cfg *Config) ([]string, error) {

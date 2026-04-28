@@ -321,7 +321,7 @@ func main() {
 		}
 	}
 
-	mcpsCfg, err := mcps.LoadConfig(mcps.ConfigPath(rootDir))
+	mcpsCfg, err := mcps.LoadMergedConfig(rootDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "nixdevkit: mcps config: %v\n", err)
 		os.Exit(1)

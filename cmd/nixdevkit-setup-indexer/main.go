@@ -24,15 +24,36 @@ type githubRelease struct {
 }
 
 func main() {
+	useGlobal := false
 	rootDir := "."
-	if len(os.Args) > 1 {
-		rootDir = os.Args[1]
+
+	args := os.Args[1:]
+	for len(args) > 0 && args[0] == "--global" {
+		useGlobal = true
+		args = args[1:]
+	}
+	if len(args) > 0 {
+		if useGlobal {
+			fmt.Fprintln(os.Stderr, "error: cannot specify root directory with --global")
+			os.Exit(1)
+		}
+		rootDir = args[0]
 	}
 	rootDir, _ = filepath.Abs(rootDir)
 
-	nixdevkitDir := cfg.DirPath(rootDir)
-	llamaDir := filepath.Join(nixdevkitDir, "llama.cpp")
-	modelsDir := filepath.Join(nixdevkitDir, "models")
+	var baseDir string
+	if useGlobal {
+		baseDir = cfg.GlobalDirPath()
+		if baseDir == "" {
+			fmt.Fprintln(os.Stderr, "error: cannot determine global config directory")
+			os.Exit(1)
+		}
+	} else {
+		baseDir = cfg.DirPath(rootDir)
+	}
+
+	llamaDir := filepath.Join(baseDir, "llama.cpp")
+	modelsDir := filepath.Join(baseDir, "models")
 
 	llamaServerPath, err := setupLlamaCpp(llamaDir)
 	if err != nil {
@@ -55,7 +76,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	configPath := cfg.FilePath(rootDir)
+	var configPath string
+	if useGlobal {
+		configPath = cfg.GlobalFilePath()
+	} else {
+		configPath = cfg.FilePath(rootDir)
+	}
 	config, err := cfg.Read(configPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)

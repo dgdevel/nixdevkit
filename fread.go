@@ -33,7 +33,7 @@ func freadHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 	}
 
 	blockSize := 30
-	config, _ := cfg.Read(cfg.FilePath(rootDir))
+	config := cfg.MergedRead(rootDir)
 	if core, ok := config["core"]; ok {
 		blockSize = cfg.Atoi(core["fread_block_size"], 30)
 	}

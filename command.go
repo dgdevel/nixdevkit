@@ -15,10 +15,7 @@ import (
 )
 
 func getCommands() (map[string]string, []string, error) {
-	config, err := cfg.Read(cfg.FilePath(rootDir))
-	if err != nil {
-		return nil, nil, err
-	}
+	config := cfg.MergedRead(rootDir)
 	section, ok := config["commands"]
 	if !ok {
 		return nil, nil, nil

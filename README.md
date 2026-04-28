@@ -264,21 +264,29 @@ No arguments.
 
 ## Configuration
 
-`nixdevkit` reads an INI-style configuration file at `[root]/.nixdevkit/config.ini`. The entire `.nixdevkit` directory is invisible to all MCP tools — it cannot be listed, read, created, edited, or deleted through the server.
+`nixdevkit` reads configuration from two locations, merged with local overriding global:
+
+1. **Global**: `$XDG_CONFIG_HOME/nixdevkit/config.ini` (or `$HOME/.config/nixdevkit/config.ini` if `XDG_CONFIG_HOME` is unset)
+2. **Local**: `[root]/.nixdevkit/config.ini`
+
+Both the global and local `.nixdevkit` directories are invisible to all MCP tools — they cannot be listed, read, created, edited, or deleted through the server.
 
 The configuration is re-read on every request, so changes take effect without restarting the server.
 
 ### `nixdevkit-config` — Manage the configuration file
 
 ```
-./nixdevkit-config <get|set> <namespace.key> [value]
+./nixdevkit-config [--global] <get|set> <namespace.key> [value]
 ./nixdevkit-config <root> <get|set> <namespace.key> [value]
 ```
+
+With `--global`, operations target the global configuration file instead of the local one. The `--global` flag cannot be combined with a root directory argument.
 
 Examples:
 
 ```
 ./nixdevkit-config set core.readonly true
+./nixdevkit-config --global set core.readonly yes
 ./nixdevkit-config get core.readonly
 ./nixdevkit-config /path/to/project set core.readonly yes
 ```
@@ -320,7 +328,7 @@ Example configuration:
 
 ### `mcps` — Upstream MCP server proxying
 
-`nixdevkit` can proxy tools from upstream MCP servers, making them available as if they were built-in. Configuration lives in `[root]/.nixdevkit/mcps.yml`.
+`nixdevkit` can proxy tools from upstream MCP servers, making them available as if they were built-in. Configuration is loaded from both global (`$XDG_CONFIG_HOME/nixdevkit/mcps.yml`) and local (`[root]/.nixdevkit/mcps.yml`), merged with local overriding global.
 
 ```yaml
 mcps:
@@ -365,10 +373,14 @@ nixdevkit includes an optional code indexer that provides semantic code search u
 ### Setup
 
 ```
-./nixdevkit-setup-indexer [rootdirectory]
+./nixdevkit-setup-indexer [--global] [rootdirectory]
 ```
 
-Downloads llama.cpp (CPU-only x86_64), an embedding model (nomic-embed-text-v1.5 Q4_K_M) and a reranking model (bge-reranker-v2-m3 Q4_K_M), then writes the configuration to `.nixdevkit/config.ini`.
+With `--global`, llama.cpp binaries and models are stored in the global config directory (`$XDG_CONFIG_HOME/nixdevkit/`), and the `[llama]` configuration is written there. This is recommended so that all projects share the same binaries and models. A root directory cannot be specified when using `--global`.
+
+Downloads llama.cpp (CPU-only x86_64), an embedding model (nomic-embed-text-v1.5 Q4_K_M) and a reranking model (bge-reranker-v2-m3 Q4_K_M), then writes the configuration to the config file.
+
+The index storage (vector database) is always local to each project at `[root]/.nixdevkit/index/`, since it is project-specific.
 
 ### First-time indexing
 
@@ -396,7 +408,7 @@ Use `fread` with the reported line range to read the actual code. Returns an emp
 
 ### Configuration
 
-The indexer reads from the `[llama]` section of `.nixdevkit/config.ini`:
+The indexer reads the `[llama]` section from the merged global+local configuration:
 
 | Key | Description |
 |-----|-------------|

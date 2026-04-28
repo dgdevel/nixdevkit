@@ -12,24 +12,42 @@ import (
 func main() {
 	args := os.Args[1:]
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: nixdevkit-config <get|set> [namespace].[key] [value]")
-		fmt.Fprintln(os.Stderr, "       nixdevkit-config <root> <get|set> [namespace].[key] [value]")
+		fmt.Fprintln(os.Stderr, "usage: nixdevkit-config [--global] <get|set> <namespace.key> [value]")
+		fmt.Fprintln(os.Stderr, "       nixdevkit-config [--global] <root> <get|set> <namespace.key> [value]")
 		os.Exit(1)
 	}
 
-	var rootDir string
+	useGlobal := false
+	if args[0] == "--global" {
+		useGlobal = true
+		args = args[1:]
+		if len(args) < 2 {
+			fmt.Fprintln(os.Stderr, "usage: nixdevkit-config [--global] <get|set> <namespace.key> [value]")
+			os.Exit(1)
+		}
+	}
+
+	var configPath string
 	var cmdArgs []string
 
 	if args[0] == "get" || args[0] == "set" {
-		rootDir = "."
+		if useGlobal {
+			configPath = cfg.GlobalFilePath()
+		} else {
+			rootDir, _ := filepath.Abs(".")
+			configPath = cfg.FilePath(rootDir)
+		}
 		cmdArgs = args
 	} else {
-		rootDir = args[0]
+		if useGlobal {
+			fmt.Fprintln(os.Stderr, "error: cannot specify root directory with --global")
+			os.Exit(1)
+		}
+		rootDir := args[0]
+		rootDir, _ = filepath.Abs(rootDir)
+		configPath = cfg.FilePath(rootDir)
 		cmdArgs = args[1:]
 	}
-
-	rootDir, _ = filepath.Abs(rootDir)
-	configPath := cfg.FilePath(rootDir)
 
 	if len(cmdArgs) < 1 {
 		fmt.Fprintln(os.Stderr, "missing command")

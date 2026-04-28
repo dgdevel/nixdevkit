@@ -11,6 +11,34 @@ import (
 
 const DirName = ".nixdevkit"
 const ConfigFile = "config.ini"
+const GlobalDirName = "nixdevkit"
+
+func GlobalBaseDir() string {
+	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
+		return xdg
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return home + "/.config"
+}
+
+func GlobalDirPath() string {
+	base := GlobalBaseDir()
+	if base == "" {
+		return ""
+	}
+	return base + "/" + GlobalDirName
+}
+
+func GlobalFilePath() string {
+	dp := GlobalDirPath()
+	if dp == "" {
+		return ""
+	}
+	return dp + "/" + ConfigFile
+}
 
 func DirPath(rootDir string) string {
 	return rootDir + "/" + DirName
@@ -29,6 +57,39 @@ func Read(path string) (map[string]map[string]string, error) {
 		return nil, err
 	}
 	return Parse(string(data)), nil
+}
+
+func Merge(global, local map[string]map[string]string) map[string]map[string]string {
+	result := make(map[string]map[string]string)
+	for ns, keys := range global {
+		result[ns] = make(map[string]string)
+		for k, v := range keys {
+			result[ns][k] = v
+		}
+	}
+	for ns, keys := range local {
+		if result[ns] == nil {
+			result[ns] = make(map[string]string)
+		}
+		for k, v := range keys {
+			result[ns][k] = v
+		}
+	}
+	return result
+}
+
+func MergedRead(rootDir string) map[string]map[string]string {
+	globalPath := GlobalFilePath()
+	global, _ := Read(globalPath)
+	if global == nil {
+		global = make(map[string]map[string]string)
+	}
+	localPath := FilePath(rootDir)
+	local, _ := Read(localPath)
+	if local == nil {
+		local = make(map[string]map[string]string)
+	}
+	return Merge(global, local)
 }
 
 func Parse(data string) map[string]map[string]string {

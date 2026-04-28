@@ -68,11 +68,7 @@ func NewIndexer(rootDir string) *Indexer {
 }
 
 func (idx *Indexer) Start() error {
-	configPath := cfg.FilePath(idx.rootDir)
-	config, err := cfg.Read(configPath)
-	if err != nil {
-		return fmt.Errorf("reading config: %w", err)
-	}
+	config := cfg.MergedRead(idx.rootDir)
 	idx.config = config
 
 	llamaCfg := config["llama"]
@@ -100,6 +96,8 @@ func (idx *Indexer) Start() error {
 			return fmt.Errorf("missing llama.reranker config")
 		}
 	}
+
+	var err error
 
 	t := time.Now()
 	fmt.Fprintf(os.Stderr, "[INFO] Starting embedder server...\n")
