@@ -124,6 +124,18 @@ func main() {
 		),
 	), catbHandler)
 
+	s.AddTool(mcp.NewTool("fread",
+		mcp.WithDescription("Read file content"),
+		mcp.WithString("path",
+			mcp.Required(),
+			mcp.Description("File to read"),
+		),
+		mcp.WithString("line_range",
+			mcp.Required(),
+			mcp.Description("Line range [from]:[to], 0-indexed"),
+		),
+	), freadHandler)
+
 	s.AddTool(mcp.NewTool("file_create",
 		mcp.WithDescription("Create a file"),
 		mcp.WithString("path",

@@ -36,6 +36,25 @@ Creates a new file. Errors if the file already exists.
 
 Recursively walks the root matching the glob pattern. Supports `*` and `**` (globstar) syntax. Directories end with `/`.
 
+### `fread` — Read file content
+
+| Argument | Description |
+|----------|-------------|
+| `path` | File to read |
+| `line_range` | Line range `[from]:[to]`, 0-indexed |
+
+Reads a file and outputs the raw content in blocks, with no transformation (no line numbers, no tab/trailing-space visualization). Output is split into blocks of 30 lines (configurable via `core.fread_block_size`). Each block is preceded by a header:
+
+```
+----- $path - line from X to Y -----
+```
+
+At the end, an EOF marker is emitted:
+
+```
+----- $path - EOF -----
+```
+
 ### `cat-b` — Read a file with line numbers (like `cat -b`)
 
 | Argument | Description |
@@ -282,6 +301,10 @@ When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 - `patch`
 - `rm`
 - `mv`
+
+### `core.fread_block_size`
+
+Block size (number of lines) for the `fread` tool. Default is `30`.
 
 ### `commands` — User-defined commands
 

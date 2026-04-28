@@ -91,6 +91,49 @@ Response:
        1	first line
        2	third line`,
 
+	"fread": `Example 1: Read full file
+
+Request:
+  tool: fread
+  arguments: {"path": "/main.go", "line_range": ":"}
+
+Response:
+  ----- /main.go - line from 1 to 4 -----
+  package main
+
+  func main() {
+  	fmt.Println("hello")
+  }
+  ----- /main.go - EOF -----
+
+Example 2: Read a specific line range (lines 3-5, 0-indexed)
+
+Request:
+  tool: fread
+  arguments: {"path": "/main.go", "line_range": "2:5"}
+
+Response:
+  ----- /main.go - line from 3 to 5 -----
+  func main() {
+  	fmt.Println("hello")
+  }
+  ----- /main.go - EOF -----
+
+Example 3: Large files are split into blocks (default 30 lines)
+
+Request:
+  tool: fread
+  arguments: {"path": "/bigfile.go", "line_range": ":"}
+
+Response:
+  ----- /bigfile.go - line from 1 to 30 -----
+  (30 lines of raw content)
+  ----- /bigfile.go - line from 31 to 60 -----
+  (next 30 lines)
+  ----- /bigfile.go - line from 61 to 75 -----
+  (final lines)
+  ----- /bigfile.go - EOF -----`,
+
 	"file_create": `Example 1: Create a new file
 
 Request:
