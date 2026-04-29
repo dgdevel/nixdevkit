@@ -5,7 +5,7 @@ A minimal MCP server exposing Unix-inspired file tools. Designed for low token u
 ## Usage
 
 ```
-./nixdevkit [--stdio|--http] [--address host:port] [--ignore pattern] [--show tools] [--hide tools] [rootdirectory]
+./nixdevkit-mcp [--stdio|--http] [--address host:port] [--ignore pattern] [--show tools] [--hide tools] [rootdirectory]
 ```
 
 All paths are virtual — `/` maps to the root directory. Path traversal is blocked.
