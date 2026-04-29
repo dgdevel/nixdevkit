@@ -12,7 +12,7 @@ All paths are virtual — `/` maps to the root directory. Path traversal is bloc
 
 - Default transport is stdio.
 - `--http` starts a streamable HTTP server on the given `--address` (default `localhost:8080`).
-- `--ignore` accepts a regular expression; files and directories whose relative path matches are hidden from all tools. Traversal tools (`ls`, `grep`, `sed`) skip entire matched directories.
+- `--ignore` accepts a comma-separated list of glob patterns. Each path component (file or directory name) is matched against every pattern. Files and directories matching any pattern are hidden from all tools. Traversal tools (`ls`, `grep`, `sed`) skip entire matched directories. Examples: `--ignore '.*'` hides all dotfiles/dirs at any depth, `--ignore '.*,node_modules'` hides both dotfiles and `node_modules`.
 - `--show` accepts a comma-separated list of tool names to expose (whitelist). Only the listed tools are available. Mutually exclusive with `--hide`. Proxied tools (from `mcps.yml`) are always included regardless of this flag.
 - `--hide` accepts a comma-separated list of tool names to hide (blacklist). All other tools remain available. Mutually exclusive with `--show`. Proxied tools are always included regardless of this flag.
 - If no root directory is given, the current working directory is used.
