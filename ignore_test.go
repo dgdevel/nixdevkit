@@ -4,14 +4,13 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-func setupIgnoreTest(t *testing.T, pattern string) {
+func setupIgnoreTest(t *testing.T, globs string) {
 	t.Helper()
 	root := t.TempDir()
 	os.MkdirAll(filepath.Join(root, "node_modules", "pkg"), 0755)
@@ -21,19 +20,19 @@ func setupIgnoreTest(t *testing.T, pattern string) {
 	os.MkdirAll(filepath.Join(root, ".git"), 0755)
 	os.WriteFile(filepath.Join(root, ".git", "config"), []byte("gitconfig"), 0644)
 	rootDir = root
-	if pattern != "" {
-		ignoreRe = regexp.MustCompile(pattern)
+	if globs != "" {
+		ignoreGlobs = strings.Split(globs, ",")
 	}
 	t.Cleanup(func() {
-		ignoreRe = nil
+		ignoreGlobs = nil
 	})
 }
 
 func TestIsIgnored(t *testing.T) {
 	root := t.TempDir()
 	rootDir = root
-	ignoreRe = regexp.MustCompile(`^node_modules`)
-	t.Cleanup(func() { ignoreRe = nil })
+	ignoreGlobs = []string{"node_modules"}
+	t.Cleanup(func() { ignoreGlobs = nil })
 
 	if isIgnored(filepath.Join(root, "app.go")) {
 		t.Error("app.go should not be ignored")
@@ -49,7 +48,7 @@ func TestIsIgnored(t *testing.T) {
 func TestIsIgnoredNil(t *testing.T) {
 	root := t.TempDir()
 	rootDir = root
-	ignoreRe = nil
+	ignoreGlobs = nil
 
 	if isIgnored(filepath.Join(root, "anything")) {
 		t.Error("nothing should be ignored when ignoreRe is nil")
@@ -57,7 +56,7 @@ func TestIsIgnoredNil(t *testing.T) {
 }
 
 func TestLsIgnore(t *testing.T) {
-	setupIgnoreTest(t, `^node_modules`)
+	setupIgnoreTest(t, "node_modules")
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -81,7 +80,7 @@ func TestLsIgnore(t *testing.T) {
 }
 
 func TestLsIgnoreDir(t *testing.T) {
-	setupIgnoreTest(t, `^node_modules`)
+	setupIgnoreTest(t, "node_modules")
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -105,7 +104,7 @@ func TestLsIgnoreDir(t *testing.T) {
 }
 
 func TestReadIgnored(t *testing.T) {
-	setupIgnoreTest(t, `^node_modules`)
+	setupIgnoreTest(t, "node_modules")
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -126,7 +125,7 @@ func TestReadIgnored(t *testing.T) {
 }
 
 func TestGrepIgnore(t *testing.T) {
-	setupIgnoreTest(t, `^node_modules`)
+	setupIgnoreTest(t, "node_modules")
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -151,7 +150,7 @@ func TestGrepIgnore(t *testing.T) {
 }
 
 func TestCreateIgnored(t *testing.T) {
-	setupIgnoreTest(t, `^\.git`)
+	setupIgnoreTest(t, ".git")
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -172,7 +171,7 @@ func TestCreateIgnored(t *testing.T) {
 }
 
 func TestSedIgnored(t *testing.T) {
-	setupIgnoreTest(t, `^\.git`)
+	setupIgnoreTest(t, ".git")
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -194,7 +193,7 @@ func TestSedIgnored(t *testing.T) {
 }
 
 func TestStatIgnored(t *testing.T) {
-	setupIgnoreTest(t, `^\.git`)
+	setupIgnoreTest(t, ".git")
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -214,7 +213,7 @@ func TestStatIgnored(t *testing.T) {
 }
 
 func TestRmIgnored(t *testing.T) {
-	setupIgnoreTest(t, `^\.git`)
+	setupIgnoreTest(t, ".git")
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -236,8 +235,8 @@ func TestRmIgnored(t *testing.T) {
 func TestDiffIgnored(t *testing.T) {
 	root := t.TempDir()
 	rootDir = root
-	ignoreRe = regexp.MustCompile(`^\.git`)
-	t.Cleanup(func() { ignoreRe = nil })
+	ignoreGlobs = []string{".git"}
+	t.Cleanup(func() { ignoreGlobs = nil })
 
 	os.WriteFile(filepath.Join(root, "a.txt"), []byte("a\n"), 0644)
 	os.WriteFile(filepath.Join(root, "b.txt"), []byte("b\n"), 0644)

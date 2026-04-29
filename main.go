@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"nixdevkit/internal/mcps"
@@ -29,7 +28,7 @@ func main() {
 		stdioF := flag.Bool("stdio", false, "use stdio transport")
 		httpF := flag.Bool("http", false, "use HTTP transport")
 		addrF := flag.String("address", "localhost:8080", "HTTP listen address")
-		ignoreF := flag.String("ignore", "", "regex pattern to ignore files/directories")
+		ignoreF := flag.String("ignore", "", "comma-separated glob patterns to ignore files/directories")
 		showF := flag.String("show", "", "comma-separated whitelist of tool names (mutually exclusive with -hide)")
 		hideF := flag.String("hide", "", "comma-separated blacklist of tool names (mutually exclusive with -show)")
 		indexerF := flag.Bool("enable-indexer", false, "start code indexer subprocess")
@@ -43,12 +42,13 @@ func main() {
 	}
 
 	if ignore != "" {
-		re, err := regexp.Compile(ignore)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "nixdevkit: invalid ignore pattern: %v\n", err)
-			os.Exit(1)
+		ignoreGlobs = splitCSV(ignore)
+		for _, g := range ignoreGlobs {
+			if _, err := filepath.Match(g, ""); err != nil {
+				fmt.Fprintf(os.Stderr, "nixdevkit: invalid ignore pattern %q: %v\n", g, err)
+				os.Exit(1)
+			}
 		}
-		ignoreRe = re
 	}
 
 	args := flag.Args()

@@ -4,23 +4,29 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 )
 
 var rootDir string
-var ignoreRe *regexp.Regexp
+var ignoreGlobs []string
 
 func isIgnored(abs string) bool {
-	if ignoreRe == nil {
+	if len(ignoreGlobs) == 0 {
 		return false
 	}
 	rel, err := filepath.Rel(rootDir, abs)
-	if err != nil {
+	if err != nil || rel == "." {
 		return false
 	}
-	return ignoreRe.MatchString(rel)
+	for _, part := range strings.Split(rel, string(os.PathSeparator)) {
+		for _, g := range ignoreGlobs {
+			if ok, _ := filepath.Match(g, part); ok {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func maskPath(s string) string {
