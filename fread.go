@@ -32,10 +32,10 @@ func freadHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 
-	blockSize := 30
+	blockSize := 100
 	config := cfg.MergedRead(rootDir)
 	if core, ok := config["core"]; ok {
-		blockSize = cfg.Atoi(core["fread_block_size"], 30)
+		blockSize = cfg.Atoi(core["fread_block_size"], 100)
 	}
 	if blockSize < 1 {
 		blockSize = 1
@@ -66,6 +66,10 @@ func freadHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 			b.WriteByte('\n')
 		}
 	}
-	fmt.Fprintf(&b, "----- %s - EOF -----\n", p)
+	if to < len(lines) {
+		fmt.Fprintf(&b, "----- %s - remaining lines from %d to %d -----\n", p, to+1, len(lines))
+	} else {
+		fmt.Fprintf(&b, "----- %s - EOF -----\n", p)
+	}
 	return mcp.NewToolResultText(b.String()), nil
 }

@@ -52,7 +52,7 @@ func TestFreadRange(t *testing.T) {
 	if result.IsError {
 		t.Fatal("fread returned error")
 	}
-	want := "----- /file1.txt - lines from 2 to 2 -----\nworld\n----- /file1.txt - EOF -----\n"
+	want := "----- /file1.txt - lines from 2 to 2 -----\nworld\n----- /file1.txt - remaining lines from 3 to 3 -----\n"
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != want {
 		t.Errorf("fread range: got %q, want %q", got, want)
@@ -158,14 +158,8 @@ func TestFreadBlocks(t *testing.T) {
 	}
 	got := result.Content[0].(mcp.TextContent).Text
 
-	if !strings.Contains(got, "----- /blocked.txt - lines from 1 to 30 -----\n") {
-		t.Error("missing block 1 header")
-	}
-	if !strings.Contains(got, "----- /blocked.txt - lines from 31 to 60 -----\n") {
-		t.Error("missing block 2 header")
-	}
-	if !strings.Contains(got, "----- /blocked.txt - lines from 61 to 75 -----\n") {
-		t.Error("missing block 3 header")
+	if !strings.Contains(got, "----- /blocked.txt - lines from 1 to 75 -----\n") {
+		t.Error("missing block header")
 	}
 	if !strings.Contains(got, "----- /blocked.txt - EOF -----\n") {
 		t.Error("missing EOF marker")
@@ -301,7 +295,13 @@ func TestFreadGrepCompatibility(t *testing.T) {
 		}
 
 		freadLine := strings.TrimPrefix(freadText, blockHeader)
-		freadLine = strings.TrimSuffix(freadLine, "\n----- "+grepPath+" - EOF -----\n")
+		eofSuffix := "\n----- " + grepPath + " - EOF -----\n"
+		remSuffix := "\n----- " + grepPath + " - remaining lines "
+		if strings.HasSuffix(freadLine, eofSuffix) {
+			freadLine = strings.TrimSuffix(freadLine, eofSuffix)
+		} else if idx := strings.Index(freadLine, remSuffix); idx >= 0 {
+			freadLine = freadLine[:idx]
+		}
 
 		if freadLine != grepContent {
 			t.Errorf("line %s: fread=%q grep=%q (path=%s)", lineNum, freadLine, grepContent, grepPath)
@@ -319,7 +319,7 @@ func TestFread1Indexed(t *testing.T) {
 	if result.IsError {
 		t.Fatal("fread returned error")
 	}
-	want := "----- /file1.txt - lines from 1 to 1 -----\nhello\n----- /file1.txt - EOF -----\n"
+	want := "----- /file1.txt - lines from 1 to 1 -----\nhello\n----- /file1.txt - remaining lines from 2 to 3 -----\n"
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != want {
 		t.Errorf("fread 1-indexed line 1: got %q, want %q", got, want)

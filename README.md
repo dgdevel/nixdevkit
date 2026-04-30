@@ -43,16 +43,22 @@ Recursively walks the root matching the glob pattern. Supports `*` and `**` (glo
 | `path` | File to read |
 | `line_range` | Line range `[from]:[to]`, 1-indexed |
 
-Reads a file and outputs the raw content in blocks, with no transformation (no line numbers, no tab/trailing-space visualization). Output is split into blocks of 30 lines (configurable via `core.fread_block_size`). Each block is preceded by a header:
+Reads a file and outputs the raw content in blocks, with no transformation (no line numbers, no tab/trailing-space visualization). Output is split into blocks of 100 lines (configurable via `core.fread_block_size`). Each block is preceded by a header:
 
 ```
 ----- $path - line from X to Y -----
 ```
 
-At the end, an EOF marker is emitted:
+At the end, a footer is emitted. If the portion emitted reaches the end of the file, an EOF marker is shown:
 
 ```
 ----- $path - EOF -----
+```
+
+If the portion does not go to the end of the file, the remaining line range is shown instead:
+
+```
+----- $path - remaining lines from X to Y -----
 ```
 
 ### `mv` — Move files
@@ -303,7 +309,7 @@ When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 
 ### `core.fread_block_size`
 
-Block size (number of lines) for the `fread` tool. Default is `30`.
+Block size (number of lines) for the `fread` tool. Default is `100`.
 
 ### `commands` — User-defined commands
 
