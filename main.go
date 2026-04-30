@@ -105,7 +105,6 @@ func main() {
 	)
 
 	s.AddTool(mcp.NewTool("ls",
-		mcp.WithDescription("List directory content"),
 		mcp.WithString("pathspec",
 			mcp.Required(),
 			mcp.Description("Glob expression for file names"),
@@ -113,10 +112,9 @@ func main() {
 	), lsHandler)
 
 	s.AddTool(mcp.NewTool("fread",
-		mcp.WithDescription("Read file content"),
+		mcp.WithDescription("Read file"),
 		mcp.WithString("path",
 			mcp.Required(),
-			mcp.Description("File to read"),
 		),
 		mcp.WithString("line_range",
 			mcp.Required(),
@@ -125,14 +123,11 @@ func main() {
 	), freadHandler)
 
 	s.AddTool(mcp.NewTool("file_create",
-		mcp.WithDescription("Create a file"),
 		mcp.WithString("path",
 			mcp.Required(),
-			mcp.Description("File path"),
 		),
 		mcp.WithString("content",
 			mcp.Required(),
-			mcp.Description("File content"),
 		),
 	), createHandler)
 
@@ -140,19 +135,17 @@ func main() {
 		mcp.WithDescription("Move files"),
 		mcp.WithString("source",
 			mcp.Required(),
-			mcp.Description("File path"),
 		),
 		mcp.WithString("dest",
 			mcp.Required(),
-			mcp.Description("File path"),
 		),
 	), mvHandler)
 
 	s.AddTool(mcp.NewTool("grep",
-		mcp.WithDescription("Print lines matching pattern with 3 context lines"),
+		mcp.WithDescription("Print lines matching pattern with context (`grep -A3 -B3`)"),
 		mcp.WithString("pattern",
 			mcp.Required(),
-			mcp.Description("Regular expression"),
+			mcp.Description("Regexp"),
 		),
 		mcp.WithString("pathspec",
 			mcp.Required(),
@@ -161,14 +154,13 @@ func main() {
 	), grepHandler)
 
 	s.AddTool(mcp.NewTool("sed",
-		mcp.WithDescription("Search and replace in files"),
+		mcp.WithDescription("Search and replace in files (`sed -i`)"),
 		mcp.WithString("pattern",
 			mcp.Required(),
-			mcp.Description("Regular expression"),
+			mcp.Description("Regexp"),
 		),
 		mcp.WithString("replacement",
 			mcp.Required(),
-			mcp.Description("Replacement string"),
 		),
 		mcp.WithString("pathspec",
 			mcp.Required(),
@@ -177,70 +169,61 @@ func main() {
 	), sedHandler)
 
 	s.AddTool(mcp.NewTool("diff",
-		mcp.WithDescription("Compare files, output unified diff"),
+		mcp.WithDescription("Compare files, get unified diff"),
 		mcp.WithString("path1",
 			mcp.Required(),
-			mcp.Description("First file path"),
 		),
 		mcp.WithString("path2",
 			mcp.Required(),
-			mcp.Description("Second file path"),
 		),
 	), diffHandler)
 
 	s.AddTool(mcp.NewTool("diff_strings",
-		mcp.WithDescription("Helper that format unified diff from two strings"),
+		mcp.WithDescription("Format unified diff from two strings"),
 		mcp.WithString("string1",
 			mcp.Required(),
-			mcp.Description("First string"),
 		),
 		mcp.WithString("string2",
 			mcp.Required(),
-			mcp.Description("Second string"),
 		),
 	), diffStringsHandler)
 
 	s.AddTool(mcp.NewTool("patch",
-		mcp.WithDescription("Apply a unified diff"),
+		mcp.WithDescription("Apply unified diff"),
 		mcp.WithString("patch",
 			mcp.Required(),
-			mcp.Description("Unified diff to apply"),
 		),
 	), patchHandler)
 
 	s.AddTool(mcp.NewTool("rm",
-		mcp.WithDescription("Delete a file or a directory"),
 		mcp.WithString("path",
 			mcp.Required(),
-			mcp.Description("Path to delete"),
+			mcp.Description("File path"),
 		),
 	), rmHandler)
 
 	s.AddTool(mcp.NewTool("stat",
-		mcp.WithDescription("Various info on files and directories"),
+		mcp.WithDescription("Infos on files and directories"),
 		mcp.WithString("path",
 			mcp.Required(),
-			mcp.Description("File or directory path"),
 		),
 	), statHandler)
 
 	s.AddTool(mcp.NewTool("tasks_list",
-		mcp.WithDescription("List of tasks prefixed by ID and state ([ ] created, [_] in progress, [X] completed)"),
+		mcp.WithDescription("List of tasks ([ ] created, [_] in progress, [X] completed)"),
 	), tasksListHandler)
 
 	s.AddTool(mcp.NewTool("task_create",
-		mcp.WithDescription("Append a task to the task list"),
 		mcp.WithString("description",
 			mcp.Required(),
-			mcp.Description("Task description"),
 		),
 		mcp.WithString("parent",
-			mcp.Description("ID of the parent task, optional"),
+			mcp.Description("ID of parent task, optional"),
 		),
 	), tasksCreateHandler)
 
 	s.AddTool(mcp.NewTool("task_set_status",
-		mcp.WithDescription("Change status of a task"),
+		mcp.WithDescription("Change status of task"),
 		mcp.WithString("ID",
 			mcp.Required(),
 			mcp.Description("Task ID"),
@@ -252,10 +235,8 @@ func main() {
 	), tasksSetStatusHandler)
 
 	s.AddTool(mcp.NewTool("task_delete",
-		mcp.WithDescription("Delete a task"),
 		mcp.WithString("ID",
 			mcp.Required(),
-			mcp.Description("Task ID"),
 		),
 	), tasksDeleteHandler)
 
@@ -267,15 +248,13 @@ func main() {
 		mcp.WithDescription("Fetch a webpage text (like `w3m -dump`)"),
 		mcp.WithString("url",
 			mcp.Required(),
-			mcp.Description("URL to fetch"),
 		),
 	), w3mdumpHandler)
 
 	s.AddTool(mcp.NewTool("online_search",
-		mcp.WithDescription("Search topic online"),
+		mcp.WithDescription("Search online"),
 		mcp.WithString("search_query",
 			mcp.Required(),
-			mcp.Description("Search query string"),
 		),
 	), onlineSearchHandler)
 
@@ -295,7 +274,6 @@ func main() {
 		mcp.WithDescription("Run the command from available_commands"),
 		mcp.WithString("name",
 			mcp.Required(),
-			mcp.Description("Name of the command to run"),
 		),
 		mcp.WithArray("arguments",
 			mcp.Description("Array of strings to pass to the command line"),
@@ -312,10 +290,9 @@ func main() {
 			fmt.Fprintf(os.Stderr, "nixdevkit: indexer: %v\n", err)
 		} else {
 			s.AddTool(mcp.NewTool("relevant_code",
-				mcp.WithDescription("Find code relevant to a prompt using semantic search and reranking. Returns one result per line in the format: file_path:line_start-line_end:language:chunk_type:signature. Use fread to read the actual code at those lines."),
+				mcp.WithDescription("Find relevant code to a prompt."),
 				mcp.WithString("prompt",
 					mcp.Required(),
-					mcp.Description("Description of the code you are looking for"),
 				),
 			), relevantCodeHandler)
 		}
