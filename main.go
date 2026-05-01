@@ -16,14 +16,14 @@ import (
 
 func main() {
 	var (
-		stdio          bool
-		http           bool
-		addr           string
-		ignore         string
-		showTools      string
-		hideTools      string
-		enableIndexer  bool
-		enableMemory   bool
+		stdio         bool
+		http          bool
+		addr          string
+		ignore        string
+		showTools     string
+		hideTools     string
+		enableIndexer bool
+		enableMemory  bool
 	)
 	{
 		stdioF := flag.Bool("stdio", false, "use stdio transport")

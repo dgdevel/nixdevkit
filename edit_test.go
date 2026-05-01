@@ -16,10 +16,10 @@ func TestEditExactMatch(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/file1.txt",
-				"start_line_number":  2,
-				"original_window":    "world",
-				"modified_window":    "earth",
+				"path":              "/file1.txt",
+				"start_line_number": 2,
+				"original_window":   "world",
+				"modified_window":   "earth",
 			},
 		},
 	}
@@ -46,10 +46,10 @@ func TestEditStartLineOffBy1(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/file1.txt",
-				"start_line_number":  3,
-				"original_window":    "world",
-				"modified_window":    "earth",
+				"path":              "/file1.txt",
+				"start_line_number": 3,
+				"original_window":   "world",
+				"modified_window":   "earth",
 			},
 		},
 	}
@@ -77,10 +77,10 @@ func TestEditStartLineOffBy5(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/file1.txt",
-				"start_line_number":  7,
-				"original_window":    "world",
-				"modified_window":    "earth",
+				"path":              "/file1.txt",
+				"start_line_number": 7,
+				"original_window":   "world",
+				"modified_window":   "earth",
 			},
 		},
 	}
@@ -108,10 +108,10 @@ func TestEditStartLineOffBy6(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/file1.txt",
-				"start_line_number":  8,
-				"original_window":    "world",
-				"modified_window":    "earth",
+				"path":              "/file1.txt",
+				"start_line_number": 8,
+				"original_window":   "world",
+				"modified_window":   "earth",
 			},
 		},
 	}
@@ -135,10 +135,10 @@ func TestEditNoMatch(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/file1.txt",
-				"start_line_number":  1,
-				"original_window":    "nonexistent",
-				"modified_window":    "replacement",
+				"path":              "/file1.txt",
+				"start_line_number": 1,
+				"original_window":   "nonexistent",
+				"modified_window":   "replacement",
 			},
 		},
 	}
@@ -160,10 +160,10 @@ func TestEditMultipleMatches(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/dup.txt",
-				"start_line_number":  50,
-				"original_window":    "hello",
-				"modified_window":    "world",
+				"path":              "/dup.txt",
+				"start_line_number": 50,
+				"original_window":   "hello",
+				"modified_window":   "world",
 			},
 		},
 	}
@@ -186,10 +186,10 @@ func TestEditMultipleMatchesWithCorrectStartLine(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/dup.txt",
-				"start_line_number":  1,
-				"original_window":    "hello",
-				"modified_window":    "bye",
+				"path":              "/dup.txt",
+				"start_line_number": 1,
+				"original_window":   "hello",
+				"modified_window":   "bye",
 			},
 		},
 	}
@@ -218,10 +218,10 @@ func TestEditMultiLineWindow(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/file1.txt",
-				"start_line_number":  1,
-				"original_window":    "hello\nworld",
-				"modified_window":    "hi\nearth",
+				"path":              "/file1.txt",
+				"start_line_number": 1,
+				"original_window":   "hello\nworld",
+				"modified_window":   "hi\nearth",
 			},
 		},
 	}
@@ -245,10 +245,10 @@ func TestEditReplaceWithMoreLines(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/file1.txt",
-				"start_line_number":  2,
-				"original_window":    "world",
-				"modified_window":    "earth\nmars",
+				"path":              "/file1.txt",
+				"start_line_number": 2,
+				"original_window":   "world",
+				"modified_window":   "earth\nmars",
 			},
 		},
 	}
@@ -272,10 +272,10 @@ func TestEditReplaceWithFewerLines(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/file1.txt",
-				"start_line_number":  1,
-				"original_window":    "hello\nworld",
-				"modified_window":    "hi",
+				"path":              "/file1.txt",
+				"start_line_number": 1,
+				"original_window":   "hello\nworld",
+				"modified_window":   "hi",
 			},
 		},
 	}
@@ -299,10 +299,10 @@ func TestEditEmptyModifiedWindow(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/file1.txt",
-				"start_line_number":  2,
-				"original_window":    "world",
-				"modified_window":    "",
+				"path":              "/file1.txt",
+				"start_line_number": 2,
+				"original_window":   "world",
+				"modified_window":   "",
 			},
 		},
 	}
@@ -326,10 +326,10 @@ func TestEditPathEscape(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "../../etc/passwd",
-				"start_line_number":  1,
-				"original_window":    "x",
-				"modified_window":    "y",
+				"path":              "../../etc/passwd",
+				"start_line_number": 1,
+				"original_window":   "x",
+				"modified_window":   "y",
 			},
 		},
 	}
@@ -349,10 +349,10 @@ func TestEditNestedFile(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/subdir/nested.txt",
-				"start_line_number":  2,
-				"original_window":    "bar",
-				"modified_window":    "baz",
+				"path":              "/subdir/nested.txt",
+				"start_line_number": 2,
+				"original_window":   "bar",
+				"modified_window":   "baz",
 			},
 		},
 	}

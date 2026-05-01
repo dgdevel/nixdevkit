@@ -217,8 +217,8 @@ func TestTasksSetStatus(t *testing.T) {
 	tasksCreateHandler(context.Background(), req)
 
 	for _, tc := range []struct {
-		status  string
-		marker  string
+		status string
+		marker string
 	}{
 		{"in_progress", "[_]"},
 		{"completed", "[X]"},

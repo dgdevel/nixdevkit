@@ -95,8 +95,8 @@ func TestAvailableCommandsEmpty(t *testing.T) {
 func TestExecCommand(t *testing.T) {
 	setupCommandTest(t, map[string]map[string]string{
 		"commands": {
-			"list":          "echo_test",
-			"echo_test_cmdline": "echo",
+			"list":                "echo_test",
+			"echo_test_cmdline":   "echo",
 			"echo_test_arguments": "arg1, arg2",
 		},
 	})
@@ -127,8 +127,8 @@ func TestExecCommand(t *testing.T) {
 func TestExecCommandWithArgs(t *testing.T) {
 	setupCommandTest(t, map[string]map[string]string{
 		"commands": {
-			"list":           "build",
-			"build_cmdline":  "echo make",
+			"list":            "build",
+			"build_cmdline":   "echo make",
 			"build_arguments": "target",
 		},
 	})
@@ -159,7 +159,7 @@ func TestExecCommandWithArgs(t *testing.T) {
 func TestExecCommandUnknown(t *testing.T) {
 	setupCommandTest(t, map[string]map[string]string{
 		"commands": {
-			"list":         "build",
+			"list":          "build",
 			"build_cmdline": "make",
 		},
 	})
@@ -240,8 +240,8 @@ func TestExecCommandNoCmdline(t *testing.T) {
 func TestExecCommandTimeout(t *testing.T) {
 	setupCommandTest(t, map[string]map[string]string{
 		"commands": {
-			"list":          "slow",
-			"slow_cmdline":  "sleep",
+			"list":           "slow",
+			"slow_cmdline":   "sleep",
 			"slow_arguments": "duration",
 		},
 	})
@@ -277,8 +277,8 @@ func TestExecCommandTimeout(t *testing.T) {
 func TestExecCommandNullByte(t *testing.T) {
 	setupCommandTest(t, map[string]map[string]string{
 		"commands": {
-			"list":          "build",
-			"build_cmdline": "echo",
+			"list":            "build",
+			"build_cmdline":   "echo",
 			"build_arguments": "arg",
 		},
 	})
@@ -305,8 +305,8 @@ func TestExecCommandNullByte(t *testing.T) {
 func TestExecCommandStderr(t *testing.T) {
 	setupCommandTest(t, map[string]map[string]string{
 		"commands": {
-			"list":            "err_test",
-			"err_test_cmdline": "/bin/sh",
+			"list":               "err_test",
+			"err_test_cmdline":   "/bin/sh",
 			"err_test_arguments": "script",
 		},
 	})

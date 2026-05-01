@@ -131,8 +131,8 @@ func TestGrepIgnore(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "grep",
 			Arguments: map[string]interface{}{
-				"pattern":   "js",
-				"pathspec":  "**",
+				"pattern":  "js",
+				"pathspec": "**",
 			},
 		},
 	}
@@ -245,10 +245,10 @@ func TestEditIgnored(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               ".git/config",
-				"start_line_number":  1,
-				"original_window":    "old",
-				"modified_window":    "new",
+				"path":              ".git/config",
+				"start_line_number": 1,
+				"original_window":   "old",
+				"modified_window":   "new",
 			},
 		},
 	}

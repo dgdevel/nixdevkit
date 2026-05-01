@@ -110,10 +110,10 @@ func TestEditErrorMasksPath(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path":               "/nonexistent.txt",
-				"start_line_number":  1,
-				"original_window":    "old",
-				"modified_window":    "new",
+				"path":              "/nonexistent.txt",
+				"start_line_number": 1,
+				"original_window":   "old",
+				"modified_window":   "new",
 			},
 		},
 	}
