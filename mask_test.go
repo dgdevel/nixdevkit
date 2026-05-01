@@ -104,32 +104,20 @@ func TestStatErrorMasksPath(t *testing.T) {
 	assertNoLeak(t, result, root)
 }
 
-func TestDiffErrorMasksPath(t *testing.T) {
+func TestEditErrorMasksPath(t *testing.T) {
 	root := setupTestRoot(t)
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "diff",
+			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path1": "/file1.txt",
-				"path2": "/nonexistent.txt",
+				"path":               "/nonexistent.txt",
+				"start_line_number":  1,
+				"original_window":    "old",
+				"modified_window":    "new",
 			},
 		},
 	}
-	result, _ := diffHandler(context.Background(), req)
-	assertNoLeak(t, result, root)
-}
-
-func TestPatchErrorMasksPath(t *testing.T) {
-	root := setupTestRoot(t)
-	req := mcp.CallToolRequest{
-		Params: mcp.CallToolParams{
-			Name: "patch",
-			Arguments: map[string]interface{}{
-				"patch": "--- /nonexistent.txt\n+++ /nonexistent.txt\n@@ -1,1 +1,1 @@\n-old\n+new",
-			},
-		},
-	}
-	result, _ := patchHandler(context.Background(), req)
+	result, _ := editHandler(context.Background(), req)
 	assertNoLeak(t, result, root)
 }
 

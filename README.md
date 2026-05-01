@@ -91,31 +91,21 @@ Output format: `filepath:linenumber:linecontent`. Shows 3 context lines before a
 
 In-place match and replace (no capturing groups). Returns list of changed files. Supports `**` globstar.
 
-### `diff` — Compare files, output unified diff
+### `edit` — Edit a file by replacing a block of text
 
 | Argument | Description |
 |----------|-------------|
-| `path1` | First file path |
-| `path2` | Second file path |
+| `path` | File path |
+| `start_line_number` | The line number where `original_window` begins (1-indexed) |
+| `original_window` | Block of text to be replaced |
+| `modified_window` | Block of text to be inserted |
 
-Output is compatible with the `patch` tool. Returns empty string if files are identical.
+Searches for `original_window` in the file at `path`. Applies the edit only if `start_line_number` is exact or off by at most 5 lines (and there's a single match within that range). Possible responses:
 
-### `diff_strings` — Helper that format unified diff from two strings
-
-| Argument | Description |
-|----------|-------------|
-| `string1` | First string |
-| `string2` | Second string |
-
-Like `diff` but operates on raw strings instead of files. Output is compatible with the `patch` tool. Returns empty string if strings are identical.
-
-### `patch` — Apply a unified diff
-
-| Argument | Description |
-|----------|-------------|
-| `patch` | Unified diff to apply |
-
-Applies the diff to the target file in-place. Designed to consume output from the `diff` tool.
+- `ok`
+- `ok, start_line_number was wrong, it was X instead`
+- `ko: no match`
+- `ko: X matches found, ensure start_line_number is right`
 
 ### `rm` — Delete a file or a directory
 
@@ -305,7 +295,7 @@ When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 
 - `file_create`
 - `sed`
-- `patch`
+- `edit`
 - `rm`
 - `mv`
 

@@ -67,7 +67,7 @@ func main() {
 		server.WithToolCapabilities(true),
 		server.WithToolFilter(func(ctx context.Context, tools []mcp.Tool) []mcp.Tool {
 			readonlyHidden := map[string]bool{
-				"file_create": true, "sed": true, "patch": true, "rm": true, "mv": true,
+				"file_create": true, "sed": true, "edit": true, "rm": true, "mv": true,
 			}
 
 			var showSet map[string]bool
@@ -170,32 +170,25 @@ func main() {
 		),
 	), sedHandler)
 
-	s.AddTool(mcp.NewTool("diff",
-		mcp.WithDescription("Compare files, get unified diff"),
-		mcp.WithString("path1",
+	s.AddTool(mcp.NewTool("edit",
+		mcp.WithDescription("Edit a file by replacing a block of text"),
+		mcp.WithString("path",
 			mcp.Required(),
+			mcp.Description("File path"),
 		),
-		mcp.WithString("path2",
+		mcp.WithNumber("start_line_number",
 			mcp.Required(),
+			mcp.Description("The line number where the original_window begins (1-indexed)"),
 		),
-	), diffHandler)
-
-	s.AddTool(mcp.NewTool("diff_strings",
-		mcp.WithDescription("Format unified diff from two strings"),
-		mcp.WithString("string1",
+		mcp.WithString("original_window",
 			mcp.Required(),
+			mcp.Description("Block of text to be replaced"),
 		),
-		mcp.WithString("string2",
+		mcp.WithString("modified_window",
 			mcp.Required(),
+			mcp.Description("Block of text to be inserted"),
 		),
-	), diffStringsHandler)
-
-	s.AddTool(mcp.NewTool("patch",
-		mcp.WithDescription("Apply unified diff"),
-		mcp.WithString("patch",
-			mcp.Required(),
-		),
-	), patchHandler)
+	), editHandler)
 
 	s.AddTool(mcp.NewTool("rm",
 		mcp.WithString("path",

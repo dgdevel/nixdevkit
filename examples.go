@@ -223,110 +223,32 @@ Request:
 Response:
   config.yaml`,
 
-	"diff": `Example 1: Two different files
+	"edit": `Example 1: Replace a single line
 
 Request:
-  tool: diff
-  arguments: {"path1": "/original.txt", "path2": "/modified.txt"}
-
-Response:
-  --- /original.txt
-  +++ /modified.txt
-  @@ -1,3 +1,3 @@
-   line one
-  -line two
-  +line two changed
-   line three
-
-Example 2: Identical files return empty string
-
-Request:
-  tool: diff
-  arguments: {"path1": "/file.txt", "path2": "/copy.txt"}
-
-Response:
-  (empty string)
-
-Example 3: Adding lines at the end
-
-Request:
-  tool: diff
-  arguments: {"path1": "/a.txt", "path2": "/b.txt"}
-
-Response:
-  --- /a.txt
-  +++ /b.txt
-  @@ -2,3 +2,5 @@
-   second line
-   third line
-  +fourth line
-  +fifth line`,
-
-	"diff_strings": `Example 1: Two different strings
-
-Request:
-  tool: diff_strings
-  arguments: {"string1": "hello\nworld", "string2": "hello\nearth"}
-
-Response:
-  --- string1
-  +++ string2
-  @@ -1,2 +1,2 @@
-   hello
-  -world
-  +earth
-
-Example 2: Identical strings return empty string
-
-Request:
-  tool: diff_strings
-  arguments: {"string1": "same", "string2": "same"}
-
-Response:
-  (empty string)
-
-Example 3: Multi-line diff
-
-Request:
-  tool: diff_strings
-  arguments: {"string1": "a\nb\nc", "string2": "a\nx\ny\nc"}
-
-Response:
-  --- string1
-  +++ string2
-  @@ -1,3 +1,4 @@
-   a
-  -b
-  +x
-  +y
-   c`,
-
-	"patch": `Example 1: Apply a unified diff
-
-Request:
-  tool: patch
-  arguments: {"patch": "--- /file.txt\n+++ /file.txt\n@@ -1,3 +1,3 @@\n line one\n-old line\n+new line\n line three"}
+  tool: edit
+  arguments: {"path": "/main.go", "start_line_number": 5, "original_window": "fmt.Println(\"hello\")", "modified_window": "fmt.Println(\"world\")"}
 
 Response:
   ok
 
-Example 2: Invalid patch format returns error
+Example 2: Replace a block of lines
 
 Request:
-  tool: patch
-  arguments: {"patch": "not a valid patch"}
-
-Response (error):
-  invalid patch format
-
-Example 3: Adding lines via patch
-
-Request:
-  tool: patch
-  arguments: {"patch": "--- /file.txt\n+++ /file.txt\n@@ -1,2 +1,4 @@\n first\n second\n+third\n+fourth"}
+  tool: edit
+  arguments: {"path": "/config.yaml", "start_line_number": 3, "original_window": "host: localhost\nport: 8080", "modified_window": "host: 0.0.0.0\nport: 9090"}
 
 Response:
-  ok`,
+  ok
+
+Example 3: start_line_number is slightly wrong but edit still applies
+
+Request:
+  tool: edit
+  arguments: {"path": "/main.go", "start_line_number": 7, "original_window": "fmt.Println(\"hello\")", "modified_window": "fmt.Println(\"world\")"}
+
+Response:
+  ok, start_line_number was wrong, it was 5 instead`,
 
 	"rm": `Example 1: Delete a file
 

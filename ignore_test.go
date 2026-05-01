@@ -232,32 +232,31 @@ func TestRmIgnored(t *testing.T) {
 	}
 }
 
-func TestDiffIgnored(t *testing.T) {
+func TestEditIgnored(t *testing.T) {
 	root := t.TempDir()
 	rootDir = root
 	ignoreGlobs = []string{".git"}
 	t.Cleanup(func() { ignoreGlobs = nil })
 
-	os.WriteFile(filepath.Join(root, "a.txt"), []byte("a\n"), 0644)
-	os.WriteFile(filepath.Join(root, "b.txt"), []byte("b\n"), 0644)
 	os.MkdirAll(filepath.Join(root, ".git"), 0755)
-	os.WriteFile(filepath.Join(root, ".git", "a"), []byte("a\n"), 0644)
-	os.WriteFile(filepath.Join(root, ".git", "b"), []byte("b\n"), 0644)
+	os.WriteFile(filepath.Join(root, ".git", "config"), []byte("old\n"), 0644)
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "diff",
+			Name: "edit",
 			Arguments: map[string]interface{}{
-				"path1": ".git/a",
-				"path2": ".git/b",
+				"path":               ".git/config",
+				"start_line_number":  1,
+				"original_window":    "old",
+				"modified_window":    "new",
 			},
 		},
 	}
-	result, err := diffHandler(context.Background(), req)
+	result, err := editHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !result.IsError {
-		t.Error("expected error diffing ignored files")
+		t.Error("expected error editing ignored file")
 	}
 }
