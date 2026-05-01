@@ -49,7 +49,22 @@ func startIndexer(rootDir string) error {
 		}
 	}
 
-	cmd := exec.Command(indexerBin, rootDir)
+	args := []string{rootDir}
+	if llamaEmbedder != nil {
+		args = []string{
+			fmt.Sprintf("--embedder-port=%d", llamaEmbedder.Port()),
+			rootDir,
+		}
+		if llamaReranker != nil {
+			args = []string{
+				fmt.Sprintf("--embedder-port=%d", llamaEmbedder.Port()),
+				fmt.Sprintf("--reranker-port=%d", llamaReranker.Port()),
+				rootDir,
+			}
+		}
+	}
+
+	cmd := exec.Command(indexerBin, args...)
 	cmd.Stderr = os.Stderr
 
 	stdin, err := cmd.StdinPipe()

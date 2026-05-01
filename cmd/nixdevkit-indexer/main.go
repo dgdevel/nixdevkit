@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -14,13 +15,28 @@ import (
 )
 
 func main() {
+	embedderPort := flag.Int("embedder-port", 0, "port of pre-started embedder server (0 = start own)")
+	rerankerPort := flag.Int("reranker-port", 0, "port of pre-started reranker server (0 = none)")
+	flag.Parse()
+
+	args := flag.Args()
 	rootDir := "."
-	if len(os.Args) > 1 {
-		rootDir = os.Args[1]
+	if len(args) > 0 {
+		rootDir = args[0]
 	}
 	rootDir, _ = filepath.Abs(rootDir)
 
-	idx := indexer.NewIndexer(rootDir)
+	var idx *indexer.Indexer
+	if *embedderPort > 0 {
+		embedder := indexer.NewLlamaServerOnPort(*embedderPort)
+		var reranker *indexer.LlamaServer
+		if *rerankerPort > 0 {
+			reranker = indexer.NewLlamaServerOnPort(*rerankerPort)
+		}
+		idx = indexer.NewIndexerWithServers(rootDir, embedder, reranker)
+	} else {
+		idx = indexer.NewIndexer(rootDir)
+	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)

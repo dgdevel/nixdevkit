@@ -51,6 +51,7 @@ type Indexer struct {
 	searchCount     int
 	resultCount     int
 	rerankerEnabled bool
+	externalServers bool // if true, servers were provided externally and won't be stopped
 
 	manifest   map[string]string
 	manifestMu sync.Mutex
@@ -67,6 +68,23 @@ func NewIndexer(rootDir string) *Indexer {
 	}
 }
 
+// NewIndexerWithServers creates an Indexer that uses pre-started llama servers
+// instead of starting its own.
+func NewIndexerWithServers(rootDir string, embedder, reranker *LlamaServer) *Indexer {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Indexer{
+		rootDir:         rootDir,
+		ctx:             ctx,
+		cancel:          cancel,
+		state:           StateStarting,
+		manifest:        make(map[string]string),
+		embedder:        embedder,
+		reranker:        reranker,
+		rerankerEnabled: reranker != nil,
+		externalServers: true,
+	}
+}
+
 func (idx *Indexer) Start() error {
 	config := cfg.MergedRead(idx.rootDir)
 	idx.config = config
@@ -76,48 +94,51 @@ func (idx *Indexer) Start() error {
 		return fmt.Errorf("missing [llama] config section")
 	}
 
-	llamaPath := llamaCfg["path"]
-	if llamaPath == "" {
-		return fmt.Errorf("missing llama.path config")
-	}
-
-	embedderRepo := llamaCfg["embedder"]
-	if embedderRepo == "" {
-		return fmt.Errorf("missing llama.embedder config")
-	}
-
-	idx.rerankerEnabled = !cfg.IsDisabled(llamaCfg["reranker_enabled"])
 	idx.searchCount = cfg.Atoi(llamaCfg["search_count"], 50)
 	idx.resultCount = cfg.Atoi(llamaCfg["result_count"], 10)
 
-	if idx.rerankerEnabled {
-		rerankerRepo := llamaCfg["reranker"]
-		if rerankerRepo == "" {
-			return fmt.Errorf("missing llama.reranker config")
-		}
-	}
-
 	var err error
 
-	t := time.Now()
-	fmt.Fprintf(os.Stderr, "[INFO] Starting embedder server...\n")
-	idx.embedder, err = StartServer(idx.ctx, llamaPath, embedderRepo, "--embedding")
-	if err != nil {
-		return fmt.Errorf("starting embedder: %w", err)
-	}
-	fmt.Fprintf(os.Stderr, "[INFO] Embedder on port %d (started in %s)\n", idx.embedder.port, time.Since(t).Round(time.Millisecond))
-
-	if idx.rerankerEnabled {
-		rerankerRepo := llamaCfg["reranker"]
-		t = time.Now()
-		fmt.Fprintf(os.Stderr, "[INFO] Starting reranker server...\n")
-		idx.reranker, err = StartServer(idx.ctx, llamaPath, rerankerRepo, "--reranking")
-		if err != nil {
-			return fmt.Errorf("starting reranker: %w", err)
+	// If embedder not pre-set, start servers ourselves
+	if idx.embedder == nil {
+		llamaPath := llamaCfg["path"]
+		if llamaPath == "" {
+			return fmt.Errorf("missing llama.path config")
 		}
-		fmt.Fprintf(os.Stderr, "[INFO] Reranker on port %d (started in %s)\n", idx.reranker.port, time.Since(t).Round(time.Millisecond))
-	} else {
-		fmt.Fprintf(os.Stderr, "[INFO] Reranker disabled\n")
+
+		embedderRepo := llamaCfg["embedder"]
+		if embedderRepo == "" {
+			return fmt.Errorf("missing llama.embedder config")
+		}
+
+		idx.rerankerEnabled = !cfg.IsDisabled(llamaCfg["reranker_enabled"])
+		if idx.rerankerEnabled {
+			rerankerRepo := llamaCfg["reranker"]
+			if rerankerRepo == "" {
+				return fmt.Errorf("missing llama.reranker config")
+			}
+		}
+
+		t := time.Now()
+		fmt.Fprintf(os.Stderr, "[INFO] Starting embedder server...\n")
+		idx.embedder, err = StartServer(idx.ctx, llamaPath, embedderRepo, "--embedding")
+		if err != nil {
+			return fmt.Errorf("starting embedder: %w", err)
+		}
+		fmt.Fprintf(os.Stderr, "[INFO] Embedder on port %d (started in %s)\n", idx.embedder.port, time.Since(t).Round(time.Millisecond))
+
+		if idx.rerankerEnabled {
+			rerankerRepo := llamaCfg["reranker"]
+			t = time.Now()
+			fmt.Fprintf(os.Stderr, "[INFO] Starting reranker server...\n")
+			idx.reranker, err = StartServer(idx.ctx, llamaPath, rerankerRepo, "--reranking")
+			if err != nil {
+				return fmt.Errorf("starting reranker: %w", err)
+			}
+			fmt.Fprintf(os.Stderr, "[INFO] Reranker on port %d (started in %s)\n", idx.reranker.port, time.Since(t).Round(time.Millisecond))
+		} else {
+			fmt.Fprintf(os.Stderr, "[INFO] Reranker disabled\n")
+		}
 	}
 
 	embedFn := func(ctx context.Context, text string) ([]float32, error) {
@@ -133,7 +154,7 @@ func (idx *Indexer) Start() error {
 	idx.loadManifest()
 
 	idx.setState(StateIndexing)
-	t = time.Now()
+	t := time.Now()
 	fileCount, chunkCount := idx.scanAndIndex()
 	fmt.Fprintf(os.Stderr, "[INFO] Initial indexing: %d files, %d chunks in %s\n", fileCount, chunkCount, time.Since(t).Round(time.Millisecond))
 
@@ -151,11 +172,13 @@ func (idx *Indexer) Stop() {
 	if idx.watcher != nil {
 		idx.watcher.Close()
 	}
-	if idx.embedder != nil {
-		idx.embedder.Stop()
-	}
-	if idx.reranker != nil {
-		idx.reranker.Stop()
+	if !idx.externalServers {
+		if idx.embedder != nil {
+			idx.embedder.Stop()
+		}
+		if idx.reranker != nil {
+			idx.reranker.Stop()
+		}
 	}
 }
 

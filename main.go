@@ -279,8 +279,17 @@ func main() {
 		),
 	), runCommandHandler)
 
+	if enableIndexer || enableMemory {
+		if err := startLlamaServers(rootDir); err != nil {
+			fmt.Fprintf(os.Stderr, "nixdevkit: llama servers: %v\n", err)
+		}
+		defer stopLlamaServers()
+	}
+
 	if enableIndexer {
-		if err := startIndexer(rootDir); err != nil {
+		if !llamaReady {
+			fmt.Fprintf(os.Stderr, "nixdevkit: indexer: skipped (llama servers not available)\n")
+		} else if err := startIndexer(rootDir); err != nil {
 			fmt.Fprintf(os.Stderr, "nixdevkit: indexer: %v\n", err)
 		} else {
 			s.AddTool(mcp.NewTool("relevant_code",
@@ -293,7 +302,9 @@ func main() {
 	}
 
 	if enableMemory {
-		if err := startMemory(rootDir); err != nil {
+		if !llamaReady {
+			fmt.Fprintf(os.Stderr, "nixdevkit: memory: skipped (llama servers not available)\n")
+		} else if err := startMemory(rootDir); err != nil {
 			fmt.Fprintf(os.Stderr, "nixdevkit: memory: %v\n", err)
 		} else {
 			s.AddTool(mcp.NewTool("memory_put",

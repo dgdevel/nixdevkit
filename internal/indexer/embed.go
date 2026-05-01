@@ -20,6 +20,14 @@ type LlamaServer struct {
 	baseURL string
 }
 
+// NewLlamaServerOnPort creates a LlamaServer client pointing at an already-running server.
+func NewLlamaServerOnPort(port int) *LlamaServer {
+	return &LlamaServer{
+		port:    port,
+		baseURL: fmt.Sprintf("http://127.0.0.1:%d", port),
+	}
+}
+
 func getFreePort() (int, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:0")
 	if err != nil {

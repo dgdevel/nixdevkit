@@ -7,9 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 
-	"nixdevkit/internal/cfg"
 	"nixdevkit/internal/indexer"
 	"nixdevkit/internal/memory"
 
@@ -18,9 +16,6 @@ import (
 
 var (
 	memStore     *memory.Memory
-	memEmbedder  *indexer.LlamaServer
-	memExtractor *indexer.LlamaServer
-	memCancel    context.CancelFunc
 	memMu        sync.Mutex
 )
 
@@ -36,82 +31,30 @@ const defaultExtractorModel = "unsloth/Qwen3.5-0.8B-GGUF"
 const defaultExtractorQuant = "UD-Q4_K_XL"
 
 func startMemory(rootDir string) error {
-	config := cfg.MergedRead(rootDir)
-	llamaCfg := config["llama"]
-	if llamaCfg == nil {
-		return fmt.Errorf("missing [llama] config section for memory")
+	if !llamaReady {
+		return fmt.Errorf("llama servers not started (missing [llama] config?)")
 	}
-
-	llamaPath := llamaCfg["path"]
-	if llamaPath == "" {
-		return fmt.Errorf("missing llama.path config for memory")
+	if llamaEmbedder == nil {
+		return fmt.Errorf("embedder server not available")
 	}
-
-	embedderRepo := llamaCfg["embedder"]
-	if embedderRepo == "" {
-		return fmt.Errorf("missing llama.embedder config for memory")
-	}
-
-	embedderFlags := strings.Fields(llamaCfg["embedder_flags"])
-
-	memCtx, cancel := context.WithCancel(context.Background())
-	memCancel = cancel
-
-	t := time.Now()
-	fmt.Fprintf(os.Stderr, "[INFO] Starting memory embedder server...\n")
-	srv, err := indexer.StartServer(memCtx, llamaPath, embedderRepo, append(embedderFlags, "--embedding")...)
-	if err != nil {
-		cancel()
-		return fmt.Errorf("starting memory embedder: %w", err)
-	}
-	memEmbedder = srv
-	fmt.Fprintf(os.Stderr, "[INFO] Memory embedder on port %d (started in %s)\n", srv.Port(), time.Since(t).Round(time.Millisecond))
 
 	embedFn := func(ctx context.Context, text string) ([]float32, error) {
-		return srv.GetEmbeddingOpenAI(ctx, text)
+		return llamaEmbedder.GetEmbeddingOpenAI(ctx, text)
 	}
 
 	memDir := memory.DirPath(rootDir)
-	memStore, err = memory.NewMemory(memCtx, memDir, embedFn)
+	store, err := memory.NewMemory(llamaCtx, memDir, embedFn)
 	if err != nil {
-		srv.Stop()
-		cancel()
 		return fmt.Errorf("initializing memory: %w", err)
 	}
+	memStore = store
 
 	fmt.Fprintf(os.Stderr, "[INFO] Memory store ready (%d facts)\n", memStore.Count())
-
-	// Start extractor server if configured
-	extractorRepo := llamaCfg["extractor"]
-	if extractorRepo == "" {
-		extractorRepo = defaultExtractorModel
-	}
-
-	extractorFlags := strings.Fields(llamaCfg["extractor_flags"])
-
-	et := time.Now()
-	fmt.Fprintf(os.Stderr, "[INFO] Starting memory extractor server (%s)...\n", extractorRepo)
-	extSrv, err := indexer.StartServer(memCtx, llamaPath, extractorRepo, extractorFlags...)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "[WARN] Memory extractor failed to start (extraction disabled): %v\n", err)
-	} else {
-		memExtractor = extSrv
-		fmt.Fprintf(os.Stderr, "[INFO] Memory extractor on port %d (started in %s)\n", extSrv.Port(), time.Since(et).Round(time.Millisecond))
-	}
-
 	return nil
 }
 
 func stopMemory() {
-	if memCancel != nil {
-		memCancel()
-	}
-	if memExtractor != nil {
-		memExtractor.Stop()
-	}
-	if memEmbedder != nil {
-		memEmbedder.Stop()
-	}
+	memStore = nil
 }
 
 func memoryPutHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -167,7 +110,7 @@ func memoryExtractHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.Ca
 	}
 
 	memMu.Lock()
-	extractor := memExtractor
+	extractor := llamaExtractor
 	store := memStore
 	memMu.Unlock()
 
