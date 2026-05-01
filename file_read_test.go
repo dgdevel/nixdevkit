@@ -13,10 +13,10 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-func freadReq(path, lineRange string) mcp.CallToolRequest {
+func fileReadReq(path, lineRange string) mcp.CallToolRequest {
 	return mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "fread",
+			Name: "file_read",
 			Arguments: map[string]interface{}{
 				"path":       path,
 				"line_range": lineRange,
@@ -25,62 +25,62 @@ func freadReq(path, lineRange string) mcp.CallToolRequest {
 	}
 }
 
-func TestFreadBasic(t *testing.T) {
+func TestFileReadBasic(t *testing.T) {
 	setupTestRoot(t)
 
-	result, err := freadHandler(context.Background(), freadReq("/file1.txt", ":"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", ":"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	want := "----- /file1.txt - lines from 1 to 3 -----\nhello\nworld\nfoo\n----- /file1.txt - EOF -----\n"
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != want {
-		t.Errorf("fread basic: got %q, want %q", got, want)
+		t.Errorf("fileRead basic: got %q, want %q", got, want)
 	}
 }
 
-func TestFreadRange(t *testing.T) {
+func TestFileReadRange(t *testing.T) {
 	setupTestRoot(t)
 
-	result, err := freadHandler(context.Background(), freadReq("/file1.txt", "2:2"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", "2:2"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	want := "----- /file1.txt - lines from 2 to 2 -----\nworld\n----- /file1.txt - remaining lines from 3 to 3 -----\n"
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != want {
-		t.Errorf("fread range: got %q, want %q", got, want)
+		t.Errorf("fileRead range: got %q, want %q", got, want)
 	}
 }
 
-func TestFreadEmptyLines(t *testing.T) {
+func TestFileReadEmptyLines(t *testing.T) {
 	setupTestRoot(t)
 	os.WriteFile(filepath.Join(rootDir, "emptylines.txt"), []byte("a\n\nb"), 0644)
 
-	result, err := freadHandler(context.Background(), freadReq("/emptylines.txt", ":"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/emptylines.txt", ":"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	want := "----- /emptylines.txt - lines from 1 to 3 -----\na\n\nb\n----- /emptylines.txt - EOF -----\n"
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != want {
-		t.Errorf("fread empty lines: got %q, want %q", got, want)
+		t.Errorf("fileRead empty lines: got %q, want %q", got, want)
 	}
 }
 
-func TestFreadPathEscape(t *testing.T) {
+func TestFileReadPathEscape(t *testing.T) {
 	setupTestRoot(t)
 
-	result, err := freadHandler(context.Background(), freadReq("../../etc/passwd", ":"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("../../etc/passwd", ":"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,13 +89,13 @@ func TestFreadPathEscape(t *testing.T) {
 	}
 }
 
-func TestFreadConfigPath(t *testing.T) {
+func TestFileReadConfigPath(t *testing.T) {
 	setupTestRoot(t)
 	cfgDir := cfg.DirPath(rootDir)
 	os.MkdirAll(cfgDir, 0755)
 	os.WriteFile(filepath.Join(cfgDir, "config.ini"), []byte("[core]\nreadonly=true\n"), 0644)
 
-	result, err := freadHandler(context.Background(), freadReq("/.nixdevkit/config.ini", ":"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/.nixdevkit/config.ini", ":"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,41 +104,41 @@ func TestFreadConfigPath(t *testing.T) {
 	}
 }
 
-func TestFreadOutOfRange(t *testing.T) {
+func TestFileReadOutOfRange(t *testing.T) {
 	setupTestRoot(t)
 
-	result, err := freadHandler(context.Background(), freadReq("/file1.txt", "100:"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", "100:"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != "" {
-		t.Errorf("fread out of range: expected empty, got %q", got)
+		t.Errorf("fileRead out of range: expected empty, got %q", got)
 	}
 }
 
-func TestFreadNoTransform(t *testing.T) {
+func TestFileReadNoTransform(t *testing.T) {
 	setupTestRoot(t)
 	os.WriteFile(filepath.Join(rootDir, "raw.txt"), []byte("a\tb\tc\nhello   \nworld  "), 0644)
 
-	result, err := freadHandler(context.Background(), freadReq("/raw.txt", ":"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/raw.txt", ":"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	want := "----- /raw.txt - lines from 1 to 3 -----\na\tb\tc\nhello   \nworld  \n----- /raw.txt - EOF -----\n"
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != want {
-		t.Errorf("fread no transform: got %q, want %q", got, want)
+		t.Errorf("fileRead no transform: got %q, want %q", got, want)
 	}
 }
 
-func TestFreadBlocks(t *testing.T) {
+func TestFileReadBlocks(t *testing.T) {
 	setupTestRoot(t)
 	var buf strings.Builder
 	for i := 0; i < 75; i++ {
@@ -149,12 +149,12 @@ func TestFreadBlocks(t *testing.T) {
 	}
 	os.WriteFile(filepath.Join(rootDir, "blocked.txt"), []byte(buf.String()), 0644)
 
-	result, err := freadHandler(context.Background(), freadReq("/blocked.txt", ":"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/blocked.txt", ":"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	got := result.Content[0].(mcp.TextContent).Text
 
@@ -172,7 +172,7 @@ func TestFreadBlocks(t *testing.T) {
 	}
 }
 
-func TestFreadCustomBlockSize(t *testing.T) {
+func TestFileReadCustomBlockSize(t *testing.T) {
 	setupTestRoot(t)
 
 	cfgDir := cfg.DirPath(rootDir)
@@ -188,12 +188,12 @@ func TestFreadCustomBlockSize(t *testing.T) {
 	}
 	os.WriteFile(filepath.Join(rootDir, "custom.txt"), []byte(buf.String()), 0644)
 
-	result, err := freadHandler(context.Background(), freadReq("/custom.txt", ":"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/custom.txt", ":"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	got := result.Content[0].(mcp.TextContent).Text
 
@@ -208,7 +208,7 @@ func TestFreadCustomBlockSize(t *testing.T) {
 	}
 }
 
-func TestFreadExactBlockBoundary(t *testing.T) {
+func TestFileReadExactBlockBoundary(t *testing.T) {
 	setupTestRoot(t)
 
 	cfgDir := cfg.DirPath(rootDir)
@@ -217,38 +217,38 @@ func TestFreadExactBlockBoundary(t *testing.T) {
 
 	os.WriteFile(filepath.Join(rootDir, "exact.txt"), []byte("a\nb\nc\nd\ne\nf"), 0644)
 
-	result, err := freadHandler(context.Background(), freadReq("/exact.txt", ":"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/exact.txt", ":"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	want := "----- /exact.txt - lines from 1 to 3 -----\na\nb\nc\n----- /exact.txt - lines from 4 to 6 -----\nd\ne\nf\n----- /exact.txt - EOF -----\n"
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != want {
-		t.Errorf("fread exact boundary: got %q, want %q", got, want)
+		t.Errorf("fileRead exact boundary: got %q, want %q", got, want)
 	}
 }
 
-func TestFreadNestedPath(t *testing.T) {
+func TestFileReadNestedPath(t *testing.T) {
 	setupTestRoot(t)
 
-	result, err := freadHandler(context.Background(), freadReq("/subdir/nested.txt", ":"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/subdir/nested.txt", ":"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	want := "----- /subdir/nested.txt - lines from 1 to 2 -----\nhello\nbar\n----- /subdir/nested.txt - EOF -----\n"
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != want {
-		t.Errorf("fread nested: got %q, want %q", got, want)
+		t.Errorf("fileRead nested: got %q, want %q", got, want)
 	}
 }
 
-func TestFreadGrepCompatibility(t *testing.T) {
+func TestFileReadGrepCompatibility(t *testing.T) {
 	setupTestRoot(t)
 	content := "alpha\nbeta\ngamma\ndelta\ngamma\nepsilon"
 	os.WriteFile(filepath.Join(rootDir, "grepcompat.txt"), []byte(content), 0644)
@@ -280,61 +280,61 @@ func TestFreadGrepCompatibility(t *testing.T) {
 		lineNum := parts[1]
 		grepContent := parts[2]
 
-		freadResult, err := freadHandler(context.Background(), freadReq(grepPath, lineNum+":"+lineNum))
+		fileReadResult, err := fileReadHandler(context.Background(), fileReadReq(grepPath, lineNum+":"+lineNum))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if freadResult.IsError {
-			t.Fatalf("fread returned error for path=%s range=%s:%s", grepPath, lineNum, lineNum)
+		if fileReadResult.IsError {
+			t.Fatalf("fileRead returned error for path=%s range=%s:%s", grepPath, lineNum, lineNum)
 		}
-		freadText := textOf(t, freadResult)
+		fileReadText := textOf(t, fileReadResult)
 
 		blockHeader := fmt.Sprintf("----- %s - lines from %s to %s -----\n", grepPath, lineNum, lineNum)
-		if !strings.HasPrefix(freadText, blockHeader) {
-			t.Errorf("fread block header mismatch: got %q, want prefix %q", freadText, blockHeader)
+		if !strings.HasPrefix(fileReadText, blockHeader) {
+			t.Errorf("fileRead block header mismatch: got %q, want prefix %q", fileReadText, blockHeader)
 		}
 
-		freadLine := strings.TrimPrefix(freadText, blockHeader)
+		fileReadLine := strings.TrimPrefix(fileReadText, blockHeader)
 		eofSuffix := "\n----- " + grepPath + " - EOF -----\n"
 		remSuffix := "\n----- " + grepPath + " - remaining lines "
-		if strings.HasSuffix(freadLine, eofSuffix) {
-			freadLine = strings.TrimSuffix(freadLine, eofSuffix)
-		} else if idx := strings.Index(freadLine, remSuffix); idx >= 0 {
-			freadLine = freadLine[:idx]
+		if strings.HasSuffix(fileReadLine, eofSuffix) {
+			fileReadLine = strings.TrimSuffix(fileReadLine, eofSuffix)
+		} else if idx := strings.Index(fileReadLine, remSuffix); idx >= 0 {
+			fileReadLine = fileReadLine[:idx]
 		}
 
-		if freadLine != grepContent {
-			t.Errorf("line %s: fread=%q grep=%q (path=%s)", lineNum, freadLine, grepContent, grepPath)
+		if fileReadLine != grepContent {
+			t.Errorf("line %s: fileRead=%q grep=%q (path=%s)", lineNum, fileReadLine, grepContent, grepPath)
 		}
 	}
 }
 
-func TestFread1Indexed(t *testing.T) {
+func TestFileRead1Indexed(t *testing.T) {
 	setupTestRoot(t)
 
-	result, err := freadHandler(context.Background(), freadReq("/file1.txt", "1:1"))
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", "1:1"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	want := "----- /file1.txt - lines from 1 to 1 -----\nhello\n----- /file1.txt - remaining lines from 2 to 3 -----\n"
 	got := result.Content[0].(mcp.TextContent).Text
 	if got != want {
-		t.Errorf("fread 1-indexed line 1: got %q, want %q", got, want)
+		t.Errorf("fileRead 1-indexed line 1: got %q, want %q", got, want)
 	}
 
-	result, err = freadHandler(context.Background(), freadReq("/file1.txt", "3:3"))
+	result, err = fileReadHandler(context.Background(), fileReadReq("/file1.txt", "3:3"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.IsError {
-		t.Fatal("fread returned error")
+		t.Fatal("fileRead returned error")
 	}
 	want = "----- /file1.txt - lines from 3 to 3 -----\nfoo\n----- /file1.txt - EOF -----\n"
 	got = result.Content[0].(mcp.TextContent).Text
 	if got != want {
-		t.Errorf("fread 1-indexed line 3: got %q, want %q", got, want)
+		t.Errorf("fileRead 1-indexed line 3: got %q, want %q", got, want)
 	}
 }

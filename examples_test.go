@@ -54,7 +54,7 @@ func TestExamplesUnknownTool(t *testing.T) {
 
 func TestExamplesAllToolsHaveEntries(t *testing.T) {
 	tools := []string{
-		"ls", "fread", "file_create", "mv", "grep", "sed",
+		"ls", "file_read", "file_create", "mv", "grep", "sed",
 		"edit", "rm", "stat",
 		"tasks_list", "task_create", "task_set_status", "task_delete", "tasks_clear",
 		"w3m-dump", "online_search", "available_commands", "run_command", "examples",

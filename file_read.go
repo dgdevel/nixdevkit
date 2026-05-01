@@ -11,7 +11,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-func freadHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func fileReadHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	p, err := req.RequireString("path")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil

@@ -113,7 +113,7 @@ func main() {
 		),
 	), lsHandler)
 
-	s.AddTool(mcp.NewTool("fread",
+	s.AddTool(mcp.NewTool("file_read",
 		mcp.WithDescription("Read file"),
 		mcp.WithString("path",
 			mcp.Required(),
@@ -122,7 +122,7 @@ func main() {
 			mcp.Required(),
 			mcp.Description("Line range [from]:[to], 1-indexed"),
 		),
-	), freadHandler)
+	), fileReadHandler)
 
 	s.AddTool(mcp.NewTool("file_create",
 		mcp.WithString("path",

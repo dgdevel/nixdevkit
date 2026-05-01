@@ -57,10 +57,10 @@ Request:
 Response:
   src/`,
 
-	"fread": `Example 1: Read full file
+	"file_read": `Example 1: Read full file
 
 Request:
-  tool: fread
+  tool: file_read
   arguments: {"path": "/main.go", "line_range": ":"}
 
 Response:
@@ -75,7 +75,7 @@ Response:
 Example 2: Read a specific line range (lines 3-5, 1-indexed)
 
 Request:
-  tool: fread
+  tool: file_read
   arguments: {"path": "/main.go", "line_range": "2:5"}
 
 Response:
@@ -88,7 +88,7 @@ Response:
 Example 3: Large files are split into blocks (default 30 lines)
 
 Request:
-  tool: fread
+  tool: file_read
   arguments: {"path": "/bigfile.go", "line_range": ":"}
 
 Response:
@@ -615,7 +615,7 @@ Request:
   arguments: {"tool_name": "nonexistent"}
 
 Response (error):
-  unknown tool "nonexistent". Available: diff, fread, ...
+  unknown tool "nonexistent". Available: diff, file_read, ...
 
 Example 3: Get examples for task tools
 

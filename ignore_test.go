@@ -108,14 +108,14 @@ func TestReadIgnored(t *testing.T) {
 
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
-			Name: "fread",
+			Name: "file_read",
 			Arguments: map[string]interface{}{
 				"path":       "node_modules/pkg/index.js",
 				"line_range": ":",
 			},
 		},
 	}
-	result, err := freadHandler(context.Background(), req)
+	result, err := fileReadHandler(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
