@@ -171,22 +171,21 @@ func main() {
 	), sedHandler)
 
 	s.AddTool(mcp.NewTool("edit",
-		mcp.WithDescription("Edit a file by replacing a block of text"),
 		mcp.WithString("path",
 			mcp.Required(),
 			mcp.Description("File path"),
 		),
 		mcp.WithNumber("start_line_number",
 			mcp.Required(),
-			mcp.Description("The line number where the original_window begins (1-indexed)"),
+			mcp.Description("Line number where original_window begins (1-indexed)"),
 		),
 		mcp.WithString("original_window",
 			mcp.Required(),
-			mcp.Description("Block of text to be replaced"),
+			mcp.Description("Text to be replaced"),
 		),
 		mcp.WithString("modified_window",
 			mcp.Required(),
-			mcp.Description("Block of text to be inserted"),
+			mcp.Description("Text to be inserted"),
 		),
 	), editHandler)
 
@@ -298,7 +297,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "nixdevkit: memory: %v\n", err)
 		} else {
 			s.AddTool(mcp.NewTool("memory_put",
-				mcp.WithDescription("Add a phrase (fact) to the system, doing the embedder -> chromem storage"),
+				mcp.WithDescription("Add a phrase (fact) to the system"),
 				mcp.WithString("fact",
 					mcp.Required(),
 					mcp.Description("Fact phrase to memorize"),
@@ -306,7 +305,7 @@ func main() {
 			), memoryPutHandler)
 
 			s.AddTool(mcp.NewTool("relevant_memory",
-				mcp.WithDescription("Search relevant facts from a prompt string; update last access and recall counter"),
+				mcp.WithDescription("Search relevant facts from prompt string"),
 				mcp.WithString("prompt",
 					mcp.Required(),
 				),
