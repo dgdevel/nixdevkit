@@ -76,6 +76,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	extractorRepo := "unsloth/Qwen3.5-0.8B-GGUF"
+	extractorFile := "Qwen3.5-0.8B-UD-Q4_K_XL.gguf"
+	if err := downloadHFModel(modelsDir, extractorRepo, extractorFile); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
 	var configPath string
 	if useGlobal {
 		configPath = cfg.GlobalFilePath()
@@ -93,6 +100,8 @@ func main() {
 	config["llama"]["path"] = llamaServerPath
 	config["llama"]["embedder"] = embedderRepo
 	config["llama"]["reranker"] = rerankerRepo
+	config["llama"]["extractor"] = extractorRepo
+	config["llama"]["extractor_flags"] = "--temp 0"
 	if err := cfg.Write(config, configPath); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)

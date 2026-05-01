@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,11 +17,23 @@ import (
 )
 
 var (
-	memStore    *memory.Memory
-	memEmbedder *indexer.LlamaServer
-	memCancel   context.CancelFunc
-	memMu       sync.Mutex
+	memStore     *memory.Memory
+	memEmbedder  *indexer.LlamaServer
+	memExtractor *indexer.LlamaServer
+	memCancel    context.CancelFunc
+	memMu        sync.Mutex
 )
+
+const memoryExtractSystemPrompt = `You are a fact extraction assistant. Extract discrete, self-contained factual statements from the text below. Rules:
+- One fact per line.
+- Each fact must be a complete, standalone sentence.
+- Skip opinions, questions, and vague statements.
+- Skip facts that are already common knowledge (e.g. "the sky is blue").
+- Preserve specific details: names, dates, quantities, locations, decisions, preferences.
+- If no extractable facts are found, output nothing.`
+
+const defaultExtractorModel = "unsloth/Qwen3.5-0.8B-GGUF"
+const defaultExtractorQuant = "UD-Q4_K_XL"
 
 func startMemory(rootDir string) error {
 	config := cfg.MergedRead(rootDir)
@@ -39,12 +52,14 @@ func startMemory(rootDir string) error {
 		return fmt.Errorf("missing llama.embedder config for memory")
 	}
 
+	embedderFlags := strings.Fields(llamaCfg["embedder_flags"])
+
 	memCtx, cancel := context.WithCancel(context.Background())
 	memCancel = cancel
 
 	t := time.Now()
 	fmt.Fprintf(os.Stderr, "[INFO] Starting memory embedder server...\n")
-	srv, err := indexer.StartServer(memCtx, llamaPath, embedderRepo, "--embedding")
+	srv, err := indexer.StartServer(memCtx, llamaPath, embedderRepo, append(embedderFlags, "--embedding")...)
 	if err != nil {
 		cancel()
 		return fmt.Errorf("starting memory embedder: %w", err)
@@ -65,12 +80,34 @@ func startMemory(rootDir string) error {
 	}
 
 	fmt.Fprintf(os.Stderr, "[INFO] Memory store ready (%d facts)\n", memStore.Count())
+
+	// Start extractor server if configured
+	extractorRepo := llamaCfg["extractor"]
+	if extractorRepo == "" {
+		extractorRepo = defaultExtractorModel
+	}
+
+	extractorFlags := strings.Fields(llamaCfg["extractor_flags"])
+
+	et := time.Now()
+	fmt.Fprintf(os.Stderr, "[INFO] Starting memory extractor server (%s)...\n", extractorRepo)
+	extSrv, err := indexer.StartServer(memCtx, llamaPath, extractorRepo, extractorFlags...)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[WARN] Memory extractor failed to start (extraction disabled): %v\n", err)
+	} else {
+		memExtractor = extSrv
+		fmt.Fprintf(os.Stderr, "[INFO] Memory extractor on port %d (started in %s)\n", extSrv.Port(), time.Since(et).Round(time.Millisecond))
+	}
+
 	return nil
 }
 
 func stopMemory() {
 	if memCancel != nil {
 		memCancel()
+	}
+	if memExtractor != nil {
+		memExtractor.Stop()
 	}
 	if memEmbedder != nil {
 		memEmbedder.Stop()
@@ -120,5 +157,129 @@ func relevantMemoryHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 	}
 
 	data, _ := json.MarshalIndent(facts, "", "  ")
+	return mcp.NewToolResultText(string(data)), nil
+}
+
+func memoryExtractHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	text, err := req.RequireString("text")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+
+	memMu.Lock()
+	extractor := memExtractor
+	store := memStore
+	memMu.Unlock()
+
+	if extractor == nil {
+		return mcp.NewToolResultError("memory extractor not initialized (no chat model configured)"), nil
+	}
+	if store == nil {
+		return mcp.NewToolResultError("memory not initialized"), nil
+	}
+
+	// Call the small LLM to extract facts
+	messages := []indexer.ChatMessage{
+		{Role: "system", Content: memoryExtractSystemPrompt},
+		{Role: "user", Content: text},
+	}
+
+	response, err := extractor.ChatCompletion(ctx, messages)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("extraction failed: %v", err)), nil
+	}
+
+	// Parse response into individual facts
+	lines := strings.Split(response, "\n")
+	var extracted []string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		// Skip empty lines, bullet prefixes, numbered prefixes
+		line = strings.TrimLeft(line, "-•*0123456789. )")
+		line = strings.TrimSpace(line)
+		if line == "" || len(line) < 10 {
+			continue
+		}
+		// Skip common non-fact patterns
+		if strings.HasPrefix(strings.ToLower(line), "here are") ||
+			strings.HasPrefix(strings.ToLower(line), "no facts") ||
+			strings.HasPrefix(strings.ToLower(line), "no extract") ||
+			strings.HasPrefix(strings.ToLower(line), "the text") ||
+			strings.HasPrefix(strings.ToLower(line), "note:") {
+			continue
+		}
+		extracted = append(extracted, line)
+	}
+
+	if len(extracted) == 0 {
+		return mcp.NewToolResultText("No extractable facts found in the text."), nil
+	}
+
+	// For each extracted fact, check vector DB for similar facts and dedup/refine
+	type factResult struct {
+		Fact    string `json:"fact"`
+		Action  string `json:"action"`
+		Similar string `json:"similar,omitempty"`
+	}
+
+	var results []factResult
+	for _, fact := range extracted {
+		// Check for similar existing facts
+		similar, _ := store.QuerySimilar(ctx, fact, 3, 0.85)
+
+		if len(similar) > 0 {
+			// Check if the extracted fact is essentially the same as an existing one
+			bestMatch := similar[0]
+
+			if bestMatch.Score > 0.93 {
+				// Nearly identical — skip, don't store duplicate
+				results = append(results, factResult{
+					Fact:    fact,
+					Action:  "skipped_duplicate",
+					Similar: bestMatch.Fact,
+				})
+				continue
+			}
+
+			// Similar but not identical — this may be a refinement.
+			// Use the extractor to decide if the new fact adds info.
+			refineMsgs := []indexer.ChatMessage{
+				{Role: "system", Content: "You are comparing two factual statements. Does statement B add new information not present in statement A, or is it just a rephrasing? Answer ONLY 'new' or 'rephrase'."},
+				{Role: "user", Content: fmt.Sprintf("Statement A: %s\nStatement B: %s", bestMatch.Fact, fact)},
+			}
+			verdict, err := extractor.ChatCompletion(ctx, refineMsgs)
+			if err == nil {
+				verdict = strings.TrimSpace(strings.ToLower(verdict))
+				if strings.Contains(verdict, "rephrase") {
+					results = append(results, factResult{
+						Fact:    fact,
+						Action:  "skipped_rephrase",
+						Similar: bestMatch.Fact,
+					})
+					continue
+				}
+			}
+		}
+
+		// Store the new fact
+		if err := store.Put(ctx, fact); err != nil {
+			results = append(results, factResult{
+				Fact:   fact,
+				Action: fmt.Sprintf("error: %v", err),
+			})
+			continue
+		}
+
+		action := "stored"
+		if len(similar) > 0 {
+			action = "stored_refined"
+		}
+		results = append(results, factResult{
+			Fact:   fact,
+			Action: action,
+		})
+	}
+
+	data, _ := json.MarshalIndent(results, "", "  ")
 	return mcp.NewToolResultText(string(data)), nil
 }

@@ -33,6 +33,53 @@ func getFreePort() (int, error) {
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
+type ChatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type ChatChoice struct {
+	Message ChatMessage `json:"message"`
+}
+
+type ChatResponse struct {
+	Choices []ChatChoice `json:"choices"`
+}
+
+func (s *LlamaServer) ChatCompletion(ctx context.Context, messages []ChatMessage) (string, error) {
+	body, _ := json.Marshal(map[string]interface{}{
+		"model":    "default",
+		"messages": messages,
+	})
+	req, err := http.NewRequestWithContext(ctx, "POST", s.baseURL+"/v1/chat/completions", bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var result ChatResponse
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return "", fmt.Errorf("parsing chat response: %w (body: %s)", err, string(respBody))
+	}
+
+	if len(result.Choices) == 0 {
+		return "", fmt.Errorf("empty chat response (body: %s)", string(respBody))
+	}
+
+	return result.Choices[0].Message.Content, nil
+}
+
 func StartServer(ctx context.Context, exeWithArgs, hfModel string, extraArgs ...string) (*LlamaServer, error) {
 	port, err := getFreePort()
 	if err != nil {

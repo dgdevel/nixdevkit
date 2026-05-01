@@ -138,6 +138,77 @@ func (m *Memory) Retrieve(ctx context.Context, prompt string, topN int) ([]Memor
 	return facts, nil
 }
 
+// QuerySimilar finds similar facts without updating recall counters.
+// Returns facts with similarity scores above the given threshold.
+func (m *Memory) QuerySimilar(ctx context.Context, text string, topN int, threshold float64) ([]MemoryFact, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	count := m.collection.Count()
+	if count == 0 {
+		return nil, nil
+	}
+	if topN > count {
+		topN = count
+	}
+
+	emb, err := m.embedFunc(ctx, text)
+	if err != nil {
+		return nil, fmt.Errorf("embedding text: %w", err)
+	}
+
+	results, err := m.collection.QueryEmbedding(ctx, emb, topN, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("querying memory: %w", err)
+	}
+
+	facts := make([]MemoryFact, 0, len(results))
+	for _, r := range results {
+		score := float64(r.Similarity)
+		if score < threshold {
+			continue
+		}
+		recalls, _ := strconv.Atoi(r.Metadata["recall_count"])
+		facts = append(facts, MemoryFact{
+			ID:          r.ID,
+			Fact:        r.Metadata["fact"],
+			CreatedAt:   r.Metadata["created_at"],
+			LastUsed:    r.Metadata["last_used"],
+			RecallCount: recalls,
+			Score:       score,
+		})
+	}
+
+	return facts, nil
+}
+
+// UpdateFact replaces an existing fact with a refined version.
+// The old ID is removed and a new one is created.
+func (m *Memory) UpdateFact(ctx context.Context, oldID, newFact string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Delete old document
+	if err := m.collection.Delete(ctx, nil, nil, oldID); err != nil {
+		fmt.Fprintf(os.Stderr, "[WARN] memory: failed to delete old fact %s: %v\n", oldID, err)
+	}
+
+	// Add new fact
+	now := time.Now().UTC().Format(time.RFC3339)
+	doc := chromem.Document{
+		ID:      factID(newFact),
+		Content: newFact,
+		Metadata: map[string]string{
+			"fact":         newFact,
+			"created_at":   now,
+			"last_used":    now,
+			"recall_count": "0",
+		},
+	}
+
+	return m.collection.AddDocuments(ctx, []chromem.Document{doc}, runtime.NumCPU())
+}
+
 func (m *Memory) Count() int {
 	return m.collection.Count()
 }

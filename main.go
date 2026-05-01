@@ -310,6 +310,14 @@ func main() {
 					mcp.Required(),
 				),
 			), relevantMemoryHandler)
+
+			s.AddTool(mcp.NewTool("memory_extract",
+				mcp.WithDescription("Extract facts from text and store them in memory, deduplicating against existing facts"),
+				mcp.WithString("text",
+					mcp.Required(),
+					mcp.Description("Text to extract facts from (conversation, notes, document)"),
+				),
+			), memoryExtractHandler)
 		}
 	}
 

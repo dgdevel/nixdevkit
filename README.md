@@ -474,6 +474,30 @@ Each result is a JSON object:
 
 Returns `No relevant memories found.` if the memory store is empty or no matches exist.
 
+### `memory_extract` — Extract facts from text
+
+| Argument | Description |
+|----------|-------------|
+| `text` | Text to extract facts from (conversation, notes, document) |
+
+Requires `--enable-memory` and a configured extractor model. Sends the text to a small local LLM (default: Qwen3.5-0.8B Q4) which extracts discrete factual statements. For each extracted fact:
+
+1. The vector database is checked for similar existing facts (cosine similarity > 0.85)
+2. Near-duplicates (similarity > 0.93) are skipped
+3. Rephrases of existing facts (verified by the LLM) are skipped
+4. New or refined facts are stored
+
+Each result is a JSON object with an `action` field:
+
+```json
+{"fact": "extracted fact text", "action": "stored"}
+{"fact": "extracted fact text", "action": "stored_refined", "similar": "existing similar fact"}
+{"fact": "already known fact", "action": "skipped_duplicate", "similar": "existing fact"}
+{"fact": "rephrased fact", "action": "skipped_rephrase", "similar": "existing fact"}
+```
+
+Returns `No extractable facts found in the text.` if nothing could be extracted.
+
 ### Configuration
 
 The memory subsystem reads the `[llama]` section from the merged configuration:
@@ -482,3 +506,6 @@ The memory subsystem reads the `[llama]` section from the merged configuration:
 |-----|-------------|
 | `llama.path` | Path to `llama-server` binary (may include extra flags) |
 | `llama.embedder` | HuggingFace repo ID for the embedding model |
+| `llama.embedder_flags` | Extra flags for the embedder llama-server instance (e.g. `--ctx-size 4096`) |
+| `llama.extractor` | HuggingFace repo ID for the chat model used for fact extraction (default: `unsloth/Qwen3.5-0.8B-GGUF`) |
+| `llama.extractor_flags` | Extra flags for the extractor llama-server instance (e.g. `--temp 0`) |
