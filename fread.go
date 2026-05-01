@@ -32,6 +32,14 @@ func freadHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRe
 		return mcp.NewToolResultError(maskPath(err.Error())), nil
 	}
 
+	checkLen := len(data)
+	if checkLen > 8192 {
+		checkLen = 8192
+	}
+	if isBinary(data[:checkLen]) {
+		return mcp.NewToolResultError("binary file, use stat for file info"), nil
+	}
+
 	blockSize := 100
 	config := cfg.MergedRead(rootDir)
 	if core, ok := config["core"]; ok {

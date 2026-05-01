@@ -105,3 +105,13 @@ func parseLineRange(s string, total int) (int, int) {
 	}
 	return from, to
 }
+
+// isBinary checks if data appears to be binary by looking for null bytes.
+func isBinary(data []byte) bool {
+	for _, b := range data {
+		if b == 0 {
+			return true
+		}
+	}
+	return false
+}

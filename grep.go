@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -55,6 +56,8 @@ func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		blocks []matchBlock
 	}
 
+	const binaryCheckSize = 8192
+
 	var results []fileResult
 	for _, f := range files {
 		rel, _ := filepath.Rel(rootDir, f)
@@ -62,6 +65,16 @@ func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		if err != nil {
 			continue
 		}
+
+		// Binary file check: skip files containing null bytes
+		buf := make([]byte, binaryCheckSize)
+		n, _ := fh.Read(buf)
+		if bytes.IndexByte(buf[:n], 0) >= 0 {
+			fh.Close()
+			continue
+		}
+		_, _ = fh.Seek(0, 0)
+
 		var lines []string
 		scanner := bufio.NewScanner(fh)
 		for scanner.Scan() {
