@@ -5,7 +5,7 @@ A minimal MCP server exposing Unix-inspired file tools. Designed for low token u
 ## Usage
 
 ```
-./nixdevkit-mcp [--stdio|--http] [--address host:port] [--ignore pattern] [--show tools] [--hide tools] [rootdirectory]
+./nixdevkit-mcp [--stdio|--http] [--address host:port] [--ignore pattern] [--show tools] [--hide tools] [--enable-indexer] [--enable-memory] [rootdirectory]
 ```
 
 All paths are virtual — `/` maps to the root directory. Path traversal is blocked.
@@ -16,6 +16,8 @@ All paths are virtual — `/` maps to the root directory. Path traversal is bloc
 - `--show` accepts a comma-separated list of tool names to expose (whitelist). Only the listed tools are available. Mutually exclusive with `--hide`. Proxied tools (from `mcps.yml`) are always included regardless of this flag.
 - `--hide` accepts a comma-separated list of tool names to hide (blacklist). All other tools remain available. Mutually exclusive with `--show`. Proxied tools are always included regardless of this flag.
 - If no root directory is given, the current working directory is used.
+- `--enable-indexer` starts the code indexer subsystem (see Code Indexer section).
+- `--enable-memory` starts the memory subsystem for fact storage and retrieval (see Memory section).
 
 ## Tools
 
@@ -424,3 +426,69 @@ The indexer reads the `[llama]` section from the merged global+local configurati
 | `llama.search_count` | Number of documents retrieved from the vector database (default: `50`) |
 | `llama.result_count` | Number of final results returned after reranking (default: `10`) |
 | `llama.reranker_enabled` | Set to `false`, `0`, `no`, `disabled`, or `off` to skip the reranker entirely. When disabled, results are scored by vector similarity only and the reranker server is not started (default: `true`) |
+
+## Memory
+
+nixdevkit includes an optional memory subsystem that provides persistent fact storage and semantic retrieval using the same llama.cpp embedding infrastructure as the code indexer. Facts are embedded, stored in a vector database, and can be recalled by semantic similarity.
+
+### Setup
+
+The memory subsystem requires the `[llama]` configuration section (shared with the code indexer). Run the indexer setup first:
+
+```
+./nixdevkit-setup-indexer [--global] [rootdirectory]
+```
+
+Then start the MCP server with `--enable-memory`:
+
+```
+./nixdevkit-mcp --enable-memory [rootdirectory]
+```
+
+The memory store is persisted at `[root]/.nixdevkit/memory/` and survives server restarts.
+
+### `memory_put` — Store a fact
+
+| Argument | Description |
+|----------|-------------|
+| `fact` | Fact phrase to memorize |
+
+Requires `--enable-memory`. Embeds the fact and stores it in the vector database. Duplicate facts (identical text) are deduplicated — re-adding the same fact overwrites the previous entry. Each fact tracks:
+
+- `created_at` — timestamp of first insertion
+- `last_used` — timestamp of last retrieval
+- `recall_count` — number of times the fact was retrieved
+
+Returns the total number of stored facts.
+
+### `relevant_memory` — Search relevant facts
+
+| Argument | Description |
+|----------|-------------|
+| `prompt` | Query to find relevant memories |
+
+Requires `--enable-memory`. Embeds the prompt, searches the vector database for semantically similar facts, and returns up to 10 results ranked by similarity. Each retrieval updates `last_used` and increments `recall_count` for the matched facts.
+
+Each result is a JSON object:
+
+```json
+{
+  "id": "sha256 hex prefix",
+  "fact": "the original fact text",
+  "created_at": "2025-01-15T10:30:00Z",
+  "last_used": "2025-01-16T14:20:00Z",
+  "recall_count": 3,
+  "score": 0.92
+}
+```
+
+Returns `No relevant memories found.` if the memory store is empty or no matches exist.
+
+### Configuration
+
+The memory subsystem reads the `[llama]` section from the merged configuration:
+
+| Key | Description |
+|-----|-------------|
+| `llama.path` | Path to `llama-server` binary (may include extra flags) |
+| `llama.embedder` | HuggingFace repo ID for the embedding model |

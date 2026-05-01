@@ -23,6 +23,7 @@ func main() {
 		showTools      string
 		hideTools      string
 		enableIndexer  bool
+		enableMemory   bool
 	)
 	{
 		stdioF := flag.Bool("stdio", false, "use stdio transport")
@@ -32,8 +33,9 @@ func main() {
 		showF := flag.String("show", "", "comma-separated whitelist of tool names (mutually exclusive with -hide)")
 		hideF := flag.String("hide", "", "comma-separated blacklist of tool names (mutually exclusive with -show)")
 		indexerF := flag.Bool("enable-indexer", false, "start code indexer subprocess")
+		memoryF := flag.Bool("enable-memory", false, "start memory subsystem with embedder")
 		flag.Parse()
-		stdio, http, addr, ignore, showTools, hideTools, enableIndexer = *stdioF, *httpF, *addrF, *ignoreF, *showF, *hideF, *indexerF
+		stdio, http, addr, ignore, showTools, hideTools, enableIndexer, enableMemory = *stdioF, *httpF, *addrF, *ignoreF, *showF, *hideF, *indexerF, *memoryF
 	}
 
 	if showTools != "" && hideTools != "" {
@@ -295,6 +297,27 @@ func main() {
 					mcp.Required(),
 				),
 			), relevantCodeHandler)
+		}
+	}
+
+	if enableMemory {
+		if err := startMemory(rootDir); err != nil {
+			fmt.Fprintf(os.Stderr, "nixdevkit: memory: %v\n", err)
+		} else {
+			s.AddTool(mcp.NewTool("memory_put",
+				mcp.WithDescription("Add a phrase (fact) to the system, doing the embedder -> chromem storage"),
+				mcp.WithString("fact",
+					mcp.Required(),
+					mcp.Description("Fact phrase to memorize"),
+				),
+			), memoryPutHandler)
+
+			s.AddTool(mcp.NewTool("relevant_memory",
+				mcp.WithDescription("Search relevant facts from a prompt string; update last access and recall counter"),
+				mcp.WithString("prompt",
+					mcp.Required(),
+				),
+			), relevantMemoryHandler)
 		}
 	}
 

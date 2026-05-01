@@ -69,6 +69,8 @@ func StartServer(ctx context.Context, exeWithArgs, hfModel string, extraArgs ...
 	return srv, nil
 }
 
+func (s *LlamaServer) Port() int { return s.port }
+
 func (s *LlamaServer) waitForReady(ctx context.Context, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
