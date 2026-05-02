@@ -55,15 +55,18 @@ func TestAvailableCommands(t *testing.T) {
 	text := textOf(t, result)
 	expected := `Command: build
 Arguments: target
+Example: make <target>
 
 Command: test
 Arguments: no arguments are taken, invoke without arguments
 Description: Run tests
+Example: make test
 
 Command: run
 Arguments: target_folder
 Arguments: config_file
 Description: Run the main executable; target_folder is the directory to work with, config_file is the reference configuration to use.
+Example: ./executable <target_folder> <config_file>
 `
 	if text != expected {
 		t.Errorf("available_commands output:\n%s\nwant:\n%s", text, expected)

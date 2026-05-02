@@ -10,7 +10,8 @@ clean:
 	rm -f nixdevkit-mcp nixdevkit-config nixdevkit-setup-indexer nixdevkit-indexer
 
 test:
-	go test -v ./...
+	go vet ./...
+	go test ./... || go test -v ./...
 
 run: compile
 	./nixdevkit-mcp --stdio

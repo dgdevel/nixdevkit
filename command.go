@@ -80,6 +80,20 @@ func availableCommandsHandler(ctx context.Context, req mcp.CallToolRequest) (*mc
 			buf.WriteString(v)
 			buf.WriteString("\n")
 		}
+		cmdlineKey := name + "_cmdline"
+		if v, ok := section[cmdlineKey]; ok && v != "" {
+			buf.WriteString("Example: ")
+			buf.WriteString(v)
+			argsKey := name + "_arguments"
+			if a, ok := section[argsKey]; ok && a != "" {
+				for _, arg := range splitCSV(a) {
+					buf.WriteString(" <")
+					buf.WriteString(strings.TrimSpace(arg))
+					buf.WriteString(">")
+				}
+			}
+			buf.WriteString("\n")
+		}
 	}
 	return mcp.NewToolResultText(buf.String()), nil
 }
