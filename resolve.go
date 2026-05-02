@@ -87,23 +87,80 @@ func globMatch(pattern, name string) bool {
 	return match(0, 0)
 }
 
-func parseLineRange(s string, total int) (int, int) {
-	parts := strings.SplitN(s, ":", 2)
-	from := 0
-	to := total
-	if parts[0] != "" {
-		if v, err := strconv.Atoi(parts[0]); err == nil && v >= 0 {
-			if v > 0 {
-				from = v - 1
-			}
+func parseLineRange(s string, total int) (int, int, string) {
+	// Empty or ":" means full range
+	if s == "" || s == ":" {
+		return 0, total, ""
+	}
+
+	// Single number like "5" means line 5 to end
+	if v, err := strconv.Atoi(s); err == nil {
+		if v < 1 {
+			return 0, 0, fmt.Sprintf("warning: line_range value %d is out of range (min 1)", v)
+		}
+		from := v - 1
+		var warn string
+		if from >= total {
+			warn = fmt.Sprintf("warning: line_range start %d exceeds total lines %d", v, total)
+			return total, total, warn
+		}
+		return from, total, ""
+	}
+
+	// Formats: from:to, from-to, [from:to], [from-to]
+	// Also: :to, from:
+	trimmed := strings.Trim(s, "[]")
+	sep := ':'
+	if strings.Contains(trimmed, "-") {
+		sep = '-'
+	}
+	parts := strings.SplitN(trimmed, string(sep), 2)
+	if len(parts) != 2 {
+		return 0, 0, fmt.Sprintf("error: invalid line_range syntax %q", s)
+	}
+
+	var from, to int
+	var warnParts []string
+
+	if parts[0] == "" {
+		from = 0
+	} else {
+		v, err := strconv.Atoi(parts[0])
+		if err != nil {
+			return 0, 0, fmt.Sprintf("error: invalid line_range syntax %q", s)
+		}
+		if v < 1 {
+			return 0, 0, fmt.Sprintf("error: invalid line_range syntax %q (min line is 1)", s)
+		}
+		from = v - 1
+		if from >= total {
+			warnParts = append(warnParts, fmt.Sprintf("start %d exceeds total lines %d", v, total))
+			from = total
 		}
 	}
-	if len(parts) > 1 && parts[1] != "" {
-		if v, err := strconv.Atoi(parts[1]); err == nil && v >= 0 {
-			to = v
+
+	if parts[1] == "" {
+		to = total
+	} else {
+		v, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return 0, 0, fmt.Sprintf("error: invalid line_range syntax %q", s)
+		}
+		if v < 1 {
+			return 0, 0, fmt.Sprintf("error: invalid line_range syntax %q (min line is 1)", s)
+		}
+		to = v
+		if to > total {
+			warnParts = append(warnParts, fmt.Sprintf("end %d exceeds total lines %d", v, total))
+			to = total
 		}
 	}
-	return from, to
+
+	var warn string
+	if len(warnParts) > 0 {
+		warn = "warning: " + strings.Join(warnParts, ", ")
+	}
+	return from, to, warn
 }
 
 // isBinary checks if data appears to be binary by looking for null bytes.

@@ -120,7 +120,7 @@ func main() {
 		),
 		mcp.WithString("line_range",
 			mcp.Required(),
-			mcp.Description("Line range [from]:[to], 1-indexed"),
+			mcp.Description("Line range, 1-indexed. Formats: from:to, from-to, [from:to], [from-to]. Examples: 1:10, 1-10, [1-10], [1:10]"),
 		),
 	), fileReadHandler)
 

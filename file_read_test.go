@@ -115,8 +115,9 @@ func TestFileReadOutOfRange(t *testing.T) {
 		t.Fatal("fileRead returned error")
 	}
 	got := result.Content[0].(mcp.TextContent).Text
-	if got != "" {
-		t.Errorf("fileRead out of range: expected empty, got %q", got)
+	want := "warning: start 100 exceeds total lines 3"
+	if got != want {
+		t.Errorf("fileRead out of range: expected %q, got %q", want, got)
 	}
 }
 
@@ -327,5 +328,108 @@ func TestFileRead1Indexed(t *testing.T) {
 	got = result.Content[0].(mcp.TextContent).Text
 	if got != want {
 		t.Errorf("fileRead 1-indexed line 3: got %q, want %q", got, want)
+	}
+}
+
+
+func TestFileReadDashRange(t *testing.T) {
+	setupTestRoot(t)
+
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", "1-2"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("fileRead returned error")
+	}
+	want := "----- /file1.txt - lines from 1 to 2 -----\nhello\nworld\n----- /file1.txt - remaining lines from 3 to 3 -----\n"
+	got := result.Content[0].(mcp.TextContent).Text
+	if got != want {
+		t.Errorf("fileRead dash range: got %q, want %q", got, want)
+	}
+}
+
+func TestFileReadBracketColonRange(t *testing.T) {
+	setupTestRoot(t)
+
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", "[1:2]"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("fileRead returned error")
+	}
+	want := "----- /file1.txt - lines from 1 to 2 -----\nhello\nworld\n----- /file1.txt - remaining lines from 3 to 3 -----\n"
+	got := result.Content[0].(mcp.TextContent).Text
+	if got != want {
+		t.Errorf("fileRead bracket colon range: got %q, want %q", got, want)
+	}
+}
+
+func TestFileReadBracketDashRange(t *testing.T) {
+	setupTestRoot(t)
+
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", "[1-2]"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("fileRead returned error")
+	}
+	want := "----- /file1.txt - lines from 1 to 2 -----\nhello\nworld\n----- /file1.txt - remaining lines from 3 to 3 -----\n"
+	got := result.Content[0].(mcp.TextContent).Text
+	if got != want {
+		t.Errorf("fileRead bracket dash range: got %q, want %q", got, want)
+	}
+}
+
+func TestFileReadOutOfRangeEnd(t *testing.T) {
+	setupTestRoot(t)
+
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", "1-100"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatal("fileRead returned error")
+	}
+	got := result.Content[0].(mcp.TextContent).Text
+	if !strings.HasPrefix(got, "warning:") {
+		t.Errorf("expected warning prefix, got %q", got)
+	}
+	if !strings.Contains(got, "end 100 exceeds total lines 3") {
+		t.Errorf("expected end out of range warning, got %q", got)
+	}
+}
+
+func TestFileReadInvalidSyntax(t *testing.T) {
+	setupTestRoot(t)
+
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", "abc"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Fatal("expected error for invalid syntax")
+	}
+	got := result.Content[0].(mcp.TextContent).Text
+	if !strings.Contains(got, "error: invalid line_range syntax") {
+		t.Errorf("expected syntax error, got %q", got)
+	}
+}
+
+func TestFileReadZeroInfixRange(t *testing.T) {
+	setupTestRoot(t)
+
+	result, err := fileReadHandler(context.Background(), fileReadReq("/file1.txt", "0:2"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Fatal("expected error for zero start")
+	}
+	got := result.Content[0].(mcp.TextContent).Text
+	if !strings.Contains(got, "error:") {
+		t.Errorf("expected error, got %q", got)
 	}
 }

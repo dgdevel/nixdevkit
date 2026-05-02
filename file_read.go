@@ -50,19 +50,25 @@ func fileReadHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToo
 	}
 
 	lines := strings.Split(string(data), "\n")
-	from, to := parseLineRange(lineRange, len(lines))
+	from, to, warn := parseLineRange(lineRange, len(lines))
+	if strings.HasPrefix(warn, "error:") {
+		return mcp.NewToolResultError(warn), nil
+	}
 	if from >= len(lines) {
-		return mcp.NewToolResultText(""), nil
+		return mcp.NewToolResultText(warn), nil
 	}
 	if to > len(lines) {
 		to = len(lines)
 	}
 	if from >= to {
-		return mcp.NewToolResultText(""), nil
+		return mcp.NewToolResultText(warn), nil
 	}
 
 	selected := lines[from:to]
 	var b strings.Builder
+	if warn != "" {
+		fmt.Fprintf(&b, "%s\n", warn)
+	}
 	for i := 0; i < len(selected); i += blockSize {
 		end := i + blockSize
 		if end > len(selected) {
