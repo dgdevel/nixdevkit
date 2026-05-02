@@ -31,7 +31,7 @@ func TestGrepStarGlob(t *testing.T) {
 		t.Fatal("grep returned error")
 	}
 	text := textOf(t, result)
-	want := "file1.txt:1:hello\nfile1.txt:2:world\nfile1.txt:3:foo"
+	want := "----- /file1.txt - lines from 1 to 2 -----\nhello\nworld"
 	if text != want {
 		t.Errorf("grep hello *.txt: got %q, want %q", text, want)
 	}
@@ -57,7 +57,7 @@ func TestGrepGlobstar(t *testing.T) {
 		t.Fatal("grep returned error")
 	}
 	text := textOf(t, result)
-	want := "file1.txt:1:hello\nfile1.txt:2:world\nfile1.txt:3:foo\n--\nsubdir/nested.txt:1:hello\nsubdir/nested.txt:2:bar"
+	want := "----- /file1.txt - lines from 1 to 2 -----\nhello\nworld\n\n----- /subdir/nested.txt - lines from 1 to 2 -----\nhello\nbar"
 	if text != want {
 		t.Errorf("grep hello **/*.txt: got %q, want %q", text, want)
 	}
@@ -83,7 +83,7 @@ func TestGrepRegex(t *testing.T) {
 		t.Fatal("grep returned error")
 	}
 	text := textOf(t, result)
-	want := "file1.txt:1:hello\nfile1.txt:2:world\nfile1.txt:3:foo"
+	want := "----- /file1.txt - lines from 1 to 3 -----\nhello\nworld\nfoo"
 	if text != want {
 		t.Errorf("grep ^w: got %q, want %q", text, want)
 	}
@@ -142,7 +142,7 @@ func TestGrepLimit500(t *testing.T) {
 	}
 	contentLines := 0
 	for _, line := range strings.Split(got, "\n") {
-		if line != "Output cut at 500 lines, refine the search pattern" && line != "--" && line != "" {
+		if line != "Output cut at 500 lines, refine the search pattern" && !strings.HasPrefix(line, "-----") && line != "" {
 			contentLines++
 		}
 	}
@@ -153,7 +153,10 @@ func TestGrepLimit500(t *testing.T) {
 
 func TestGrepContextOverlap(t *testing.T) {
 	root := t.TempDir()
-	os.WriteFile(filepath.Join(root, "test.txt"), []byte("a\nb\nc\nmatch1\ne\nf\ng\nmatch2\ni\nj"), 0644)
+	// With ctx=1, matches at distance <= 2*ctxLines merge.
+	// match1 at line 3, match2 at line 5. Distance=2 <= 2*1, so they merge.
+	// Merged block: from line 2 to line 6.
+	os.WriteFile(filepath.Join(root, "test.txt"), []byte("a\nb\nmatch1\nx\nmatch2\ny\nz"), 0644)
 	rootDir = root
 
 	req := mcp.CallToolRequest{
@@ -173,12 +176,13 @@ func TestGrepContextOverlap(t *testing.T) {
 		t.Fatal("grep returned error")
 	}
 	text := textOf(t, result)
-	if strings.Contains(text, "--") {
-		t.Errorf("expected no -- separator for overlapping context, got %q", text)
+	// Should be a single block, no blank line separator
+	if strings.Count(text, "----- /") != 1 {
+		t.Errorf("expected single block for overlapping context, got %q", text)
 	}
 	lines := strings.Split(text, "\n")
-	if lines[0] != "test.txt:1:a" {
-		t.Errorf("expected first line to be context from start, got %q", lines[0])
+	if lines[0] != "----- /test.txt - lines from 2 to 6 -----" {
+		t.Errorf("expected merged block header, got %q", lines[0])
 	}
 }
 

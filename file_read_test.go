@@ -248,7 +248,7 @@ func TestFileReadNestedPath(t *testing.T) {
 	}
 }
 
-func TestFileReadGrepCompatibility(t *testing.T) {
+func TestFileReadGrepBlockCompatibility(t *testing.T) {
 	setupTestRoot(t)
 	content := "alpha\nbeta\ngamma\ndelta\ngamma\nepsilon"
 	os.WriteFile(filepath.Join(rootDir, "grepcompat.txt"), []byte(content), 0644)
@@ -269,42 +269,33 @@ func TestFileReadGrepCompatibility(t *testing.T) {
 		t.Fatal("grep returned error")
 	}
 	grepText := textOf(t, grepResult)
+
+	// Verify grep output contains file_read-style block header
+	if !strings.HasPrefix(grepText, "----- /grepcompat.txt - lines from ") {
+		t.Fatalf("expected block header prefix, got %q", grepText[:60])
+	}
+
+	// Verify "gamma" appears in the output (two occurrences)
+	gammaCount := strings.Count(grepText, "gamma")
+	if gammaCount != 2 {
+		t.Errorf("expected 2 occurrences of gamma, got %d", gammaCount)
+	}
+
+	// Read the full file via file_read and verify grep content is a subset
+	fileReadResult, err := fileReadHandler(context.Background(), fileReadReq("/grepcompat.txt", ":"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	fileReadText := textOf(t, fileReadResult)
+
+	// Every content line in grep output must appear in file_read output
 	grepLines := strings.Split(grepText, "\n")
-
 	for _, gl := range grepLines {
-		parts := strings.SplitN(gl, ":", 3)
-		if len(parts) != 3 {
-			t.Fatalf("unexpected grep output line: %q", gl)
+		if strings.HasPrefix(gl, "-----") || gl == "" {
+			continue
 		}
-		grepPath := "/" + parts[0]
-		lineNum := parts[1]
-		grepContent := parts[2]
-
-		fileReadResult, err := fileReadHandler(context.Background(), fileReadReq(grepPath, lineNum+":"+lineNum))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if fileReadResult.IsError {
-			t.Fatalf("fileRead returned error for path=%s range=%s:%s", grepPath, lineNum, lineNum)
-		}
-		fileReadText := textOf(t, fileReadResult)
-
-		blockHeader := fmt.Sprintf("----- %s - lines from %s to %s -----\n", grepPath, lineNum, lineNum)
-		if !strings.HasPrefix(fileReadText, blockHeader) {
-			t.Errorf("fileRead block header mismatch: got %q, want prefix %q", fileReadText, blockHeader)
-		}
-
-		fileReadLine := strings.TrimPrefix(fileReadText, blockHeader)
-		eofSuffix := "\n----- " + grepPath + " - EOF -----\n"
-		remSuffix := "\n----- " + grepPath + " - remaining lines "
-		if strings.HasSuffix(fileReadLine, eofSuffix) {
-			fileReadLine = strings.TrimSuffix(fileReadLine, eofSuffix)
-		} else if idx := strings.Index(fileReadLine, remSuffix); idx >= 0 {
-			fileReadLine = fileReadLine[:idx]
-		}
-
-		if fileReadLine != grepContent {
-			t.Errorf("line %s: fileRead=%q grep=%q (path=%s)", lineNum, fileReadLine, grepContent, grepPath)
+		if !strings.Contains(fileReadText, gl) {
+			t.Errorf("grep line %q not found in file_read output", gl)
 		}
 	}
 }

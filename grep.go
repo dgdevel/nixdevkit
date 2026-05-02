@@ -47,13 +47,13 @@ func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		return nil
 	})
 
-	const ctxLines = 3
+	const ctxLines = 1
 
 	type matchBlock struct{ start, end int }
 	type fileResult struct {
-		rel    string
-		lines  []string
-		blocks []matchBlock
+		relPath string
+		lines   []string
+		blocks  []matchBlock
 	}
 
 	const binaryCheckSize = 8192
@@ -104,19 +104,19 @@ func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		}
 		blocks = append(blocks, matchBlock{bs, be})
 
-		results = append(results, fileResult{rel: rel, lines: lines, blocks: blocks})
+		results = append(results, fileResult{relPath: rel, lines: lines, blocks: blocks})
 	}
 
 	if len(results) == 0 {
 		return mcp.NewToolResultText(""), nil
 	}
 
-	var allLines []string
+	var b strings.Builder
+	totalLines := 0
+	cut := false
+
 	for _, fr := range results {
 		for _, block := range fr.blocks {
-			if len(allLines) > 0 {
-				allLines = append(allLines, "--")
-			}
 			from := block.start - ctxLines
 			if from < 0 {
 				from = 0
@@ -125,32 +125,27 @@ func grepHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 			if to > len(fr.lines) {
 				to = len(fr.lines)
 			}
+
+			if totalLines > 0 {
+				b.WriteByte('\n')
+			}
+			fmt.Fprintf(&b, "----- /%s - lines from %d to %d -----\n", fr.relPath, from+1, to)
 			for i := from; i < to; i++ {
-				allLines = append(allLines, fmt.Sprintf("%s:%d:%s", fr.rel, i+1, fr.lines[i]))
+				if totalLines >= 500 {
+					cut = true
+					break
+				}
+				b.WriteString(fr.lines[i])
+				b.WriteByte('\n')
+				totalLines++
+			}
+			if cut {
+				break
 			}
 		}
-	}
-
-	var b strings.Builder
-	contentCount := 0
-	cut := false
-	pendingSep := false
-	for _, line := range allLines {
-		if line == "--" {
-			pendingSep = true
-			continue
-		}
-		if contentCount >= 500 {
-			cut = true
+		if cut {
 			break
 		}
-		if pendingSep {
-			b.WriteString("--\n")
-			pendingSep = false
-		}
-		b.WriteString(line)
-		b.WriteByte('\n')
-		contentCount++
 	}
 
 	text := strings.TrimRight(b.String(), "\n")

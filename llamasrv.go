@@ -22,7 +22,7 @@ var (
 	llamaReady     bool
 )
 
-func startLlamaServers(rootDir string) error {
+func startLlamaServers(rootDir string, enableMemory bool) error {
 	config := cfg.MergedRead(rootDir)
 	llamaCfg := config["llama"]
 	if llamaCfg == nil {
@@ -78,20 +78,24 @@ func startLlamaServers(rootDir string) error {
 	}
 
 	// Optionally start extractor (for memory)
-	extractorRepo := llamaCfg["extractor"]
-	if extractorRepo == "" {
-		extractorRepo = defaultExtractorModel
-	}
-	extractorFlags := strings.Fields(llamaCfg["extractor_flags"])
+	if enableMemory {
+		extractorRepo := llamaCfg["extractor"]
+		if extractorRepo == "" {
+			extractorRepo = defaultExtractorModel
+		}
+		extractorFlags := strings.Fields(llamaCfg["extractor_flags"])
 
-	t = time.Now()
-	fmt.Fprintf(os.Stderr, "[INFO] Starting extractor server (%s)...\n", extractorRepo)
-	extSrv, err := indexer.StartServer(ctx, llamaPath, extractorRepo, extractorFlags...)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "[WARN] Extractor failed to start (memory extraction disabled): %v\n", err)
+		t = time.Now()
+		fmt.Fprintf(os.Stderr, "[INFO] Starting extractor server (%s)...\n", extractorRepo)
+		extSrv, err := indexer.StartServer(ctx, llamaPath, extractorRepo, extractorFlags...)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "[WARN] Extractor failed to start (memory extraction disabled): %v\n", err)
+		} else {
+			llamaExtractor = extSrv
+			fmt.Fprintf(os.Stderr, "[INFO] Extractor on port %d (started in %s)\n", extSrv.Port(), time.Since(t).Round(time.Millisecond))
+		}
 	} else {
-		llamaExtractor = extSrv
-		fmt.Fprintf(os.Stderr, "[INFO] Extractor on port %d (started in %s)\n", extSrv.Port(), time.Since(t).Round(time.Millisecond))
+		fmt.Fprintf(os.Stderr, "[INFO] Extractor skipped (memory disabled)\n")
 	}
 
 	llamaReady = true

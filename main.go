@@ -144,7 +144,7 @@ func main() {
 	), mvHandler)
 
 	s.AddTool(mcp.NewTool("grep",
-		mcp.WithDescription("Print lines matching pattern with context (`grep -A3 -B3`)"),
+		mcp.WithDescription("Print lines matching pattern with context (`grep -A1 -B1`)"),
 		mcp.WithString("pattern",
 			mcp.Required(),
 			mcp.Description("Regexp"),
@@ -280,7 +280,7 @@ func main() {
 	), runCommandHandler)
 
 	if enableIndexer || enableMemory {
-		if err := startLlamaServers(rootDir); err != nil {
+		if err := startLlamaServers(rootDir, enableMemory); err != nil {
 			fmt.Fprintf(os.Stderr, "nixdevkit: llama servers: %v\n", err)
 		}
 		defer stopLlamaServers()
