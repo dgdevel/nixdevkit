@@ -376,7 +376,7 @@ nixdevkit includes an optional code indexer that provides semantic code search u
 
 With `--global`, llama.cpp binaries and models are stored in the global config directory (`$XDG_CONFIG_HOME/nixdevkit/`), and the `[llama]` configuration is written there. This is recommended so that all projects share the same binaries and models. A root directory cannot be specified when using `--global`.
 
-Downloads llama.cpp (CPU-only x86_64), an embedding model (nomic-embed-text-v1.5 Q4_K_M) and a reranking model (bge-reranker-v2-m3 Q4_K_M), then writes the configuration to the config file.
+Downloads llama.cpp (CPU-only x86_64), an embedding model and a reranking model, then writes the configuration to the config file.
 
 The index storage (vector database) is always local to each project at `[root]/.nixdevkit/index/`, since it is project-specific.
 
