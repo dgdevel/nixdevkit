@@ -69,7 +69,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	rerankerRepo := "cstr/bge-reranker-base-GGUF"
+	rerankerRepo := "xinming0111/bge-reranker-base-Q8_0-GGUF"
 	rerankerFile := "bge-reranker-base-q8_0.gguf"
 	if err := downloadHFModel(modelsDir, rerankerRepo, rerankerFile); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)

@@ -12,7 +12,7 @@ import (
 	"nixdevkit/internal/indexer"
 )
 
-const defaultRerankerModel = "cstr/bge-reranker-base-GGUF"
+const defaultRerankerModel = "xinming0111/bge-reranker-base-Q8_0-GGUF"
 const defaultRerankerFile = "bge-reranker-base-q8_0.gguf"
 
 var (
