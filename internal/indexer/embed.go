@@ -98,7 +98,24 @@ func StartServer(ctx context.Context, exeWithArgs, hfModel string, extraArgs ...
 	if len(parts) == 0 {
 		return nil, fmt.Errorf("empty exe path")
 	}
-	args := append(parts[1:], "-hf", hfModel, "--port", fmt.Sprintf("%d", port), "--host", "127.0.0.1", "--ctx-size", "2048", "--batch-size", "2048", "--ubatch-size", "2048", "-np", "1")
+
+	// Detect which default flags are overridden by extraArgs so we don't duplicate them.
+	// llama.cpp takes the first occurrence, so appending after defaults would lose the override.
+	overrideSet := map[string]bool{}
+	for _, a := range extraArgs {
+		overrideSet[a] = true
+	}
+	defaultFlags := []string{"--ctx-size", "2048", "--batch-size", "2048", "--ubatch-size", "2048", "-np", "1"}
+	var filteredDefaults []string
+	for i := 0; i < len(defaultFlags); i += 2 {
+		flag := defaultFlags[i]
+		if !overrideSet[flag] {
+			filteredDefaults = append(filteredDefaults, flag, defaultFlags[i+1])
+		}
+	}
+
+	args := append(parts[1:], "-hf", hfModel, "--port", fmt.Sprintf("%d", port), "--host", "127.0.0.1")
+	args = append(args, filteredDefaults...)
 	args = append(args, extraArgs...)
 
 	cmd := exec.CommandContext(ctx, parts[0], args...)
