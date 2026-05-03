@@ -12,6 +12,9 @@ import (
 	"nixdevkit/internal/indexer"
 )
 
+const defaultRerankerModel = "cstr/bge-reranker-base-GGUF"
+const defaultRerankerFile = "bge-reranker-base-q8_0.gguf"
+
 var (
 	llamaCtx       context.Context
 	llamaCancel    context.CancelFunc
@@ -61,17 +64,17 @@ func startLlamaServers(rootDir string, enableMemory bool) error {
 	if rerankerEnabled {
 		rerankerRepo := llamaCfg["reranker"]
 		if rerankerRepo == "" {
-			fmt.Fprintf(os.Stderr, "[WARN] Reranker enabled but llama.reranker not configured, skipping\n")
+			rerankerRepo = defaultRerankerModel
+		}
+		rerankerFlags := []string{"--reranking", "--hf-file", defaultRerankerFile}
+		t = time.Now()
+		fmt.Fprintf(os.Stderr, "[INFO] Starting reranker server (%s)...\n", rerankerRepo)
+		rerankerSrv, err := indexer.StartServer(ctx, llamaPath, rerankerRepo, rerankerFlags...)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "[WARN] Reranker failed to start: %v\n", err)
 		} else {
-			t = time.Now()
-			fmt.Fprintf(os.Stderr, "[INFO] Starting reranker server...\n")
-			rerankerSrv, err := indexer.StartServer(ctx, llamaPath, rerankerRepo, "--reranking")
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "[WARN] Reranker failed to start: %v\n", err)
-			} else {
-				llamaReranker = rerankerSrv
-				fmt.Fprintf(os.Stderr, "[INFO] Reranker on port %d (started in %s)\n", rerankerSrv.Port(), time.Since(t).Round(time.Millisecond))
-			}
+			llamaReranker = rerankerSrv
+			fmt.Fprintf(os.Stderr, "[INFO] Reranker on port %d (started in %s)\n", rerankerSrv.Port(), time.Since(t).Round(time.Millisecond))
 		}
 	} else {
 		fmt.Fprintf(os.Stderr, "[INFO] Reranker disabled\n")
