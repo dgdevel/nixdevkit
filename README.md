@@ -38,17 +38,17 @@ Creates a new file. Errors if the file already exists.
 
 Recursively walks the root matching the glob pattern. Supports `*` and `**` (globstar) syntax. Directories end with `/`.
 
-### `fread` — Read file content
+### `file_read` — Read file content
 
 | Argument | Description |
 |----------|-------------|
 | `path` | File to read |
-| `line_range` | Line range `[from]:[to]`, 1-indexed |
+| `line_range` | Line range, 1-indexed. Formats: `from:to`, `from-to`, `[from:to]`, `[from-to]`. Also `:to`, `from:`, or a single number for that line to end |
 
 Reads a file and outputs the raw content in blocks, with no transformation (no line numbers, no tab/trailing-space visualization). Output is split into blocks of 100 lines (configurable via `core.fread_block_size`). Each block is preceded by a header:
 
 ```
------ $path - line from X to Y -----
+----- $path - lines from X to Y -----
 ```
 
 At the end, a footer is emitted. If the portion emitted reaches the end of the file, an EOF marker is shown:
@@ -79,7 +79,7 @@ Moves a file or directory. Fails if destination already exists or source not fou
 | `pattern` | Regular expression |
 | `pathspec` | Glob expression for file names |
 
-Output format: `filepath:linenumber:linecontent`. Shows 3 context lines before and after each match. Non-adjacent match groups are separated by `--`. Supports `**` globstar. Line numbers are 1-indexed. Output is limited to 500 content lines.
+Output uses `file_read`-style block headers (`----- /path - lines from X to Y -----`). Shows 1 context line before and after each match. Non-adjacent match groups are separated by blank lines. Supports `**` globstar. Line numbers in headers are 1-indexed. Output is limited to 500 content lines.
 
 ### `sed` — Search and replace in files
 
@@ -186,11 +186,11 @@ Description: Run the main executable; target_folder is the directory to work wit
 
 ### `run_command` — Run the command
 
-| Argument | Description |
-|----------|-------------|
-| `name` | Name of the command to run |
-| `arguments` | Array of strings to pass to the command line |
-| `timeout` | Timeout in seconds |
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `name` | Yes | Name of the command to run |
+| `arguments` | No | Array of strings to pass to the command line |
+| `timeout` | Yes | Timeout in seconds |
 
 Validates the command name and argument count against the configuration, sanitizes input, and executes the command. Arguments are only accepted when the command defines an `arguments` list; passing arguments to a command that takes none is an error. Stdout and stderr are merged and returned untouched. On timeout, the process is sent SIGTERM, then SIGKILL after 5 seconds. If a timeout occurs, the output is prefixed with `Command timed out. Partial output.`.
 
@@ -301,7 +301,7 @@ When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 
 ### `core.fread_block_size`
 
-Block size (number of lines) for the `fread` tool. Default is `100`.
+Block size (number of lines) for the `file_read` tool. Default is `100`.
 
 ### `commands` — User-defined commands
 
@@ -388,7 +388,7 @@ The initial index can take several minutes depending on project size. It is reco
 echo "reindex" | ./nixdevkit-indexer [rootdirectory]
 ```
 
-Wait for the `ok` response, then start the MCP server with `--enable-indexer`. Subsequent startups will only index changed files (incremental via mtime tracking).
+Wait for the `ok` response, then start the MCP server with `--enable-indexer`. Subsequent startups will only index changed files (incremental via content hash tracking).
 
 ### `relevant_code` — Semantic code search
 
@@ -402,7 +402,7 @@ Requires `--enable-indexer`. Returns one result per line in the format:
 file_path:line_start-line_end:language:chunk_type:signature
 ```
 
-Use `fread` with the reported line range to read the actual code. Returns an empty string if the indexer is not ready or no results are found.
+Use `file_read` with the reported line range to read the actual code. Returns an empty string if the indexer is not ready or no results are found.
 
 ### Configuration
 

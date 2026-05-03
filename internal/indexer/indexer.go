@@ -2,8 +2,10 @@ package indexer
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -270,8 +272,21 @@ func (idx *Indexer) HandleRetrieve(query string) ([]RetrieveResult, error) {
 	return results, nil
 }
 
+func fileHash(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
 func (idx *Indexer) scanAndIndex() (int, int) {
-	fileMTimes := make(map[string]string)
+	fileHashes := make(map[string]string)
 	fileCount := 0
 	chunkCount := 0
 
@@ -298,10 +313,13 @@ func (idx *Indexer) scanAndIndex() (int, int) {
 			return nil
 		}
 
-		mtime := info.ModTime().Format(time.RFC3339Nano)
-		fileMTimes[relPath] = mtime
+		hash, err := fileHash(path)
+		if err != nil {
+			return nil
+		}
+		fileHashes[relPath] = hash
 
-		if stored, ok := idx.manifest[relPath]; ok && stored == mtime {
+		if stored, ok := idx.manifest[relPath]; ok && stored == hash {
 			return nil
 		}
 
@@ -313,12 +331,12 @@ func (idx *Indexer) scanAndIndex() (int, int) {
 	})
 
 	for fp := range idx.manifest {
-		if _, ok := fileMTimes[fp]; !ok {
+		if _, ok := fileHashes[fp]; !ok {
 			idx.store.RemoveFile(idx.ctx, fp)
 		}
 	}
 
-	idx.manifest = fileMTimes
+	idx.manifest = fileHashes
 	idx.saveManifest()
 
 	return fileCount, chunkCount
@@ -446,13 +464,18 @@ func (idx *Indexer) watchLoop() {
 			idx.setState(StateIndexing)
 			for _, fp := range toReindex {
 				absPath := filepath.Join(idx.rootDir, fp)
-				if info, err := os.Stat(absPath); err != nil {
+				if _, err := os.Stat(absPath); err != nil {
 					idx.store.RemoveFile(idx.ctx, fp)
 					delete(idx.manifest, fp)
 				} else {
-					mtime := info.ModTime().Format(time.RFC3339Nano)
-					idx.manifest[fp] = mtime
-					idx.indexFile(fp, absPath)
+					hash, herr := fileHash(absPath)
+					if herr != nil {
+						idx.store.RemoveFile(idx.ctx, fp)
+						delete(idx.manifest, fp)
+					} else {
+						idx.manifest[fp] = hash
+						idx.indexFile(fp, absPath)
+					}
 				}
 			}
 			idx.saveManifest()
