@@ -52,8 +52,8 @@ func TestTasksCreateTopLevel(t *testing.T) {
 		t.Fatal("tasks_create returned error")
 	}
 	text := textOf(t, result)
-	if text != "Created ID: 1" {
-		t.Errorf("expected 'Created ID: 1', got %q", text)
+	if !strings.HasPrefix(text, "Created ID: 1\n") {
+		t.Errorf("expected 'Created ID: 1' prefix, got %q", text)
 	}
 }
 
@@ -121,8 +121,8 @@ func TestTasksCreateWithParent(t *testing.T) {
 		t.Fatal("tasks_create returned error")
 	}
 	text := textOf(t, result)
-	if text != "Created ID: 1.1" {
-		t.Errorf("expected 'Created ID: 1.1', got %q", text)
+	if !strings.HasPrefix(text, "Created ID: 1.1\n") {
+		t.Errorf("expected 'Created ID: 1.1' prefix, got %q", text)
 	}
 	req = mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -179,8 +179,8 @@ func TestTasksCreateGrandchild(t *testing.T) {
 		t.Fatal("tasks_create returned error")
 	}
 	text := textOf(t, result)
-	if text != "Created ID: 1.1.1" {
-		t.Errorf("expected 'Created ID: 1.1.1', got %q", text)
+	if !strings.HasPrefix(text, "Created ID: 1.1.1\n") {
+		t.Errorf("expected 'Created ID: 1.1.1' prefix, got %q", text)
 	}
 }
 
@@ -290,8 +290,9 @@ func TestTasksSetStatusNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !result.IsError {
-		t.Error("expected error for non-existent task")
+	text := result.Content[0].(mcp.TextContent).Text
+	if !strings.HasPrefix(text, "Not found") {
+		t.Errorf("expected 'Not found' prefix, got %q", text)
 	}
 }
 
@@ -554,7 +555,7 @@ func TestTasksNextIdAfterDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := textOf(t, result)
-	if text != "Created ID: 4" {
-		t.Errorf("expected 'Created ID: 4' after deleting task 2, got %q", text)
+	if !strings.HasPrefix(text, "Created ID: 4\n") {
+		t.Errorf("expected 'Created ID: 4' prefix after deleting task 2, got %q", text)
 	}
 }

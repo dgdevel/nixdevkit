@@ -55,24 +55,38 @@ type Indexer struct {
 	rerankerEnabled bool
 	externalServers bool // if true, servers were provided externally and won't be stopped
 
-	manifest   map[string]string
-	manifestMu sync.Mutex
+	manifest      map[string]string
+	manifestMu    sync.Mutex
+
+	signatures []SignatureEntry
+
+	ignoreGlobs []string
 }
 
-func NewIndexer(rootDir string) *Indexer {
+type SignatureEntry struct {
+	FilePath  string `json:"file_path"`
+	LineStart int    `json:"line_start"`
+	LineEnd   int    `json:"line_end"`
+	Language  string `json:"language"`
+	ChunkType string `json:"chunk_type"`
+	Signature string `json:"signature"`
+}
+
+func NewIndexer(rootDir string, ignoreGlobs []string) *Indexer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Indexer{
-		rootDir:  rootDir,
-		ctx:      ctx,
-		cancel:   cancel,
-		state:    StateStarting,
-		manifest: make(map[string]string),
+		rootDir:     rootDir,
+		ctx:         ctx,
+		cancel:      cancel,
+		state:       StateStarting,
+		manifest:    make(map[string]string),
+		ignoreGlobs: ignoreGlobs,
 	}
 }
 
 // NewIndexerWithServers creates an Indexer that uses pre-started llama servers
 // instead of starting its own.
-func NewIndexerWithServers(rootDir string, embedder, reranker *LlamaServer) *Indexer {
+func NewIndexerWithServers(rootDir string, embedder, reranker *LlamaServer, ignoreGlobs []string) *Indexer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Indexer{
 		rootDir:         rootDir,
@@ -84,7 +98,26 @@ func NewIndexerWithServers(rootDir string, embedder, reranker *LlamaServer) *Ind
 		reranker:        reranker,
 		rerankerEnabled: reranker != nil,
 		externalServers: true,
+		ignoreGlobs:     ignoreGlobs,
 	}
+}
+
+func (idx *Indexer) shouldIgnore(path string) bool {
+	if len(idx.ignoreGlobs) == 0 {
+		return false
+	}
+	rel, err := filepath.Rel(idx.rootDir, path)
+	if err != nil || rel == "." {
+		return false
+	}
+	for _, part := range strings.Split(rel, string(os.PathSeparator)) {
+		for _, g := range idx.ignoreGlobs {
+			if ok, _ := filepath.Match(g, part); ok {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (idx *Indexer) Start() error {
@@ -197,12 +230,33 @@ func (idx *Indexer) HandleReindex() error {
 	}
 
 	idx.manifest = make(map[string]string)
+	idx.signatures = nil
 	idx.saveManifest()
 
 	fileCount, chunkCount := idx.scanAndIndex()
 	fmt.Fprintf(os.Stderr, "[INFO] Reindex: %d files, %d chunks\n", fileCount, chunkCount)
 
 	return nil
+}
+
+func (idx *Indexer) HandleSearchSignature(symbol string) []SignatureEntry {
+	var results []SignatureEntry
+	for _, s := range idx.signatures {
+		if strings.Contains(s.Signature, symbol) {
+			results = append(results, s)
+		}
+	}
+	return results
+}
+
+func removeFileSignatures(entries []SignatureEntry, filePath string) []SignatureEntry {
+	filtered := entries[:0]
+	for _, s := range entries {
+		if s.FilePath != filePath {
+			filtered = append(filtered, s)
+		}
+	}
+	return filtered
 }
 
 func (idx *Indexer) HandleRetrieve(query string) ([]RetrieveResult, error) {
@@ -295,7 +349,7 @@ func (idx *Indexer) scanAndIndex() (int, int) {
 			return nil
 		}
 		if info.IsDir() {
-			if path != idx.rootDir && SkipDir(info.Name()) {
+			if path != idx.rootDir && (SkipDir(info.Name()) || idx.shouldIgnore(path)) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -306,6 +360,10 @@ func (idx *Indexer) scanAndIndex() (int, int) {
 			return nil
 		}
 		if strings.HasPrefix(relPath, ".nixdevkit") {
+			return nil
+		}
+
+		if idx.shouldIgnore(path) {
 			return nil
 		}
 
@@ -333,6 +391,7 @@ func (idx *Indexer) scanAndIndex() (int, int) {
 	for fp := range idx.manifest {
 		if _, ok := fileHashes[fp]; !ok {
 			idx.store.RemoveFile(idx.ctx, fp)
+			idx.signatures = removeFileSignatures(idx.signatures, fp)
 		}
 	}
 
@@ -366,6 +425,29 @@ func (idx *Indexer) indexFile(relPath, absPath string) int {
 
 	if len(chunks) == 0 {
 		return 0
+	}
+
+	// Remove old signatures for this file
+	filtered := idx.signatures[:0]
+	for _, s := range idx.signatures {
+		if s.FilePath != relPath {
+			filtered = append(filtered, s)
+		}
+	}
+	idx.signatures = filtered
+
+	// Collect new signatures
+	for _, c := range chunks {
+		if c.Signature != "" {
+			idx.signatures = append(idx.signatures, SignatureEntry{
+				FilePath:  c.FilePath,
+				LineStart: c.LineStart,
+				LineEnd:   c.LineEnd,
+				Language:  c.Language,
+				ChunkType: c.ChunkType,
+				Signature: c.Signature,
+			})
+		}
 	}
 
 	idx.store.RemoveFile(idx.ctx, relPath)
@@ -420,6 +502,10 @@ func (idx *Indexer) watchLoop() {
 				continue
 			}
 
+			if idx.shouldIgnore(event.Name) {
+				continue
+			}
+
 			if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
 				if event.Has(fsnotify.Create) && !SkipDir(info.Name()) {
 					idx.watcher.Add(event.Name)
@@ -467,11 +553,13 @@ func (idx *Indexer) watchLoop() {
 				if _, err := os.Stat(absPath); err != nil {
 					idx.store.RemoveFile(idx.ctx, fp)
 					delete(idx.manifest, fp)
+					idx.signatures = removeFileSignatures(idx.signatures, fp)
 				} else {
 					hash, herr := fileHash(absPath)
 					if herr != nil {
 						idx.store.RemoveFile(idx.ctx, fp)
 						delete(idx.manifest, fp)
+						idx.signatures = removeFileSignatures(idx.signatures, fp)
 					} else {
 						idx.manifest[fp] = hash
 						idx.indexFile(fp, absPath)

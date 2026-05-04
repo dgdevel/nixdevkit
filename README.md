@@ -239,7 +239,17 @@ Returns the content of the tasks file.
 | `description` | Yes | Task description |
 | `parent` | No | ID of the parent task |
 
-Returns the assigned ID in the format `Created ID: $ID`. When `parent` is provided, the new task becomes a child (e.g. `parent="2"` → new ID `2.1`).
+Returns the assigned ID and the current task list:
+
+```
+Created ID: 3
+Current Tasks:
+1. [X] Design the API
+2. [_] Implement features
+3. [ ] New task
+```
+
+When `parent` is provided, the new task becomes a child (e.g. `parent="2"` → new ID `2.1`).
 
 ### `task_set_status` — Change status of a task
 
@@ -248,13 +258,31 @@ Returns the assigned ID in the format `Created ID: $ID`. When `parent` is provid
 | `ID` | Task ID |
 | `status` | One of: `created`, `in_progress`, `completed` |
 
+Returns the updated status and the current task list:
+
+```
+ID: 2 set to completed
+Current Tasks:
+1. [X] Design the API
+2. [X] Implement features
+```
+
+If the ID is not found, returns `Not found` followed by the current task list.
+
 ### `task_delete` — Delete a task
 
 | Argument | Description |
 |----------|-------------|
 | `ID` | Task ID |
 
-Deletes the task and all its children.
+Deletes the task and all its children. Returns `Done` or `Not found` followed by the current task list:
+
+```
+Done
+Current Tasks:
+1. [X] Design the API
+3. [ ] Write documentation
+```
 
 ### `tasks_clear` — Clear all tasks
 
@@ -396,13 +424,31 @@ Wait for the `ok` response, then start the MCP server with `--enable-indexer`. S
 |----------|-------------|
 | `prompt` | Description of the code you are looking for |
 
-Requires `--enable-indexer`. Returns one result per line in the format:
+Requires `--enable-indexer`. Returns results as blocks separated by an empty line:
 
 ```
-file_path:line_start-line_end:language:chunk_type:signature
+Signature: func myFunction(x int) error
+File: pkg/handler.go
+Line Range: 42-58
+Language: go
+Type: function
+
+Signature: type MyStruct struct
+File: pkg/types.go
+Line Range: 10-15
+Language: go
+Type: type
 ```
 
 Use `file_read` with the reported line range to read the actual code. Returns an empty string if the indexer is not ready or no results are found.
+
+### `search_symbol_in_code` — Search symbol in indexed signatures
+
+| Argument | Description |
+|----------|-------------|
+| `symbol_name` | Symbol name to search for (substring match) |
+
+Requires `--enable-indexer`. Searches all indexed code signatures for the given symbol name (substring match). Returns results in the same block format as `relevant_code`. Returns an empty string if the indexer is not ready or no results are found.
 
 ### Configuration
 

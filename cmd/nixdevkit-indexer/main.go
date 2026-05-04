@@ -17,7 +17,13 @@ import (
 func main() {
 	embedderPort := flag.Int("embedder-port", 0, "port of pre-started embedder server (0 = start own)")
 	rerankerPort := flag.Int("reranker-port", 0, "port of pre-started reranker server (0 = none)")
+	ignoreF := flag.String("ignore", "", "comma-separated glob patterns to ignore files/directories")
 	flag.Parse()
+
+	var ignoreGlobs []string
+	if *ignoreF != "" {
+		ignoreGlobs = strings.Split(*ignoreF, ",")
+	}
 
 	args := flag.Args()
 	rootDir := "."
@@ -33,9 +39,9 @@ func main() {
 		if *rerankerPort > 0 {
 			reranker = indexer.NewLlamaServerOnPort(*rerankerPort)
 		}
-		idx = indexer.NewIndexerWithServers(rootDir, embedder, reranker)
+		idx = indexer.NewIndexerWithServers(rootDir, embedder, reranker, ignoreGlobs)
 	} else {
-		idx = indexer.NewIndexer(rootDir)
+		idx = indexer.NewIndexer(rootDir, ignoreGlobs)
 	}
 
 	sigChan := make(chan os.Signal, 1)
@@ -96,6 +102,16 @@ func main() {
 			data, _ := json.Marshal(results)
 			fmt.Println(string(data))
 			fmt.Fprintf(os.Stderr, "[INFO] retrieve completed in %s (%d results)\n", time.Since(t).Round(time.Millisecond), len(results))
+
+		case "search_signature":
+			if len(parts) < 2 || strings.TrimSpace(parts[1]) == "" {
+				fmt.Println("error: missing symbol name")
+				continue
+			}
+			symbol := parts[1]
+			results := idx.HandleSearchSignature(symbol)
+			data, _ := json.Marshal(results)
+			fmt.Println(string(data))
 
 		default:
 			fmt.Printf("error: unknown command: %s\n", cmd)

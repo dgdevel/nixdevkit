@@ -289,15 +289,19 @@ func main() {
 	if enableIndexer {
 		if !llamaReady {
 			fmt.Fprintf(os.Stderr, "nixdevkit: indexer: skipped (llama servers not available)\n")
-		} else if err := startIndexer(rootDir); err != nil {
+		} else if err := startIndexer(rootDir, ignore); err != nil {
 			fmt.Fprintf(os.Stderr, "nixdevkit: indexer: %v\n", err)
 		} else {
 			s.AddTool(mcp.NewTool("relevant_code",
-				mcp.WithDescription("Find relevant code to a prompt."),
 				mcp.WithString("prompt",
 					mcp.Required(),
 				),
 			), relevantCodeHandler)
+			s.AddTool(mcp.NewTool("search_symbol_in_code",
+				mcp.WithString("symbol_name",
+					mcp.Required(),
+				),
+			), searchSymbolInCodeHandler)
 		}
 	}
 

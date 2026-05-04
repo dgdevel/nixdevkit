@@ -36,7 +36,7 @@ type retrieveResult struct {
 	Score     float64 `json:"score"`
 }
 
-func startIndexer(rootDir string) error {
+func startIndexer(rootDir string, ignore string) error {
 	exePath, err := os.Executable()
 	if err != nil {
 		return err
@@ -50,16 +50,25 @@ func startIndexer(rootDir string) error {
 	}
 
 	args := []string{rootDir}
+	if ignore != "" {
+		args = append([]string{fmt.Sprintf("--ignore=%s", ignore)}, args...)
+	}
 	if llamaEmbedder != nil {
 		args = []string{
 			fmt.Sprintf("--embedder-port=%d", llamaEmbedder.Port()),
 			rootDir,
+		}
+		if ignore != "" {
+			args = append([]string{fmt.Sprintf("--ignore=%s", ignore)}, args...)
 		}
 		if llamaReranker != nil {
 			args = []string{
 				fmt.Sprintf("--embedder-port=%d", llamaEmbedder.Port()),
 				fmt.Sprintf("--reranker-port=%d", llamaReranker.Port()),
 				rootDir,
+			}
+			if ignore != "" {
+				args = append([]string{fmt.Sprintf("--ignore=%s", ignore)}, args...)
 			}
 		}
 	}
@@ -171,14 +180,48 @@ func relevantCodeHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.Cal
 		return mcp.NewToolResultText(""), nil
 	}
 
-	var lines []string
+	return mcp.NewToolResultText(formatSignatureBlocks(results)), nil
+}
+
+func formatSignatureBlocks(results []retrieveResult) string {
+	var blocks []string
 	for _, r := range results {
 		sig := r.Signature
 		if sig == "" {
 			sig = "-"
 		}
-		lines = append(lines, fmt.Sprintf("%s:%d-%d:%s:%s:%s", r.FilePath, r.LineStart, r.LineEnd, r.Language, r.ChunkType, sig))
+		blocks = append(blocks, fmt.Sprintf("Signature: %s\nFile: %s\nLine Range: %d-%d\nLanguage: %s\nType: %s", sig, r.FilePath, r.LineStart, r.LineEnd, r.Language, r.ChunkType))
+	}
+	return strings.Join(blocks, "\n\n")
+}
+
+func searchSymbolInCodeHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	symbolName, err := req.RequireString("symbol_name")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
 
-	return mcp.NewToolResultText(strings.Join(lines, "\n")), nil
+	state := indexerHealth()
+	if state != "idle" {
+		return mcp.NewToolResultText(""), nil
+	}
+
+	resp, err := indexerSend("search_signature " + symbolName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[WARN] nixdevkit: indexer search_signature error: %v\n", err)
+		return mcp.NewToolResultText(""), nil
+	}
+
+	resp = strings.TrimSpace(resp)
+	if resp == "" || strings.HasPrefix(resp, "error:") {
+		return mcp.NewToolResultText(""), nil
+	}
+
+	var results []retrieveResult
+	if err := json.Unmarshal([]byte(resp), &results); err != nil {
+		fmt.Fprintf(os.Stderr, "[WARN] nixdevkit: parse search_signature results: %v\n", err)
+		return mcp.NewToolResultText(""), nil
+	}
+
+	return mcp.NewToolResultText(formatSignatureBlocks(results)), nil
 }

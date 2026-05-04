@@ -7,11 +7,14 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"nixdevkit/internal/cfg"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
+
+var tasksMu sync.Mutex
 
 type task struct {
 	ID          string
@@ -182,6 +185,8 @@ func nextChildID(tasks []task, parentID string) (string, error) {
 }
 
 func tasksListHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	tasksMu.Lock()
+	defer tasksMu.Unlock()
 	data, err := os.ReadFile(tasksFilePath())
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -203,6 +208,8 @@ func tasksCreateHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.Call
 			parent = s
 		}
 	}
+	tasksMu.Lock()
+	defer tasksMu.Unlock()
 	tasks, err := readTasks()
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
@@ -221,7 +228,7 @@ func tasksCreateHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.Call
 	if err := writeTasks(tasks); err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	return mcp.NewToolResultText(fmt.Sprintf("Created ID: %s", id)), nil
+	return mcp.NewToolResultText(fmt.Sprintf("Created ID: %s\nCurrent Tasks:\n%s", id, formatTasks(tasks))), nil
 }
 
 func tasksSetStatusHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -236,6 +243,8 @@ func tasksSetStatusHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 	if _, err := statusToMarker(status); err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+	tasksMu.Lock()
+	defer tasksMu.Unlock()
 	tasks, err := readTasks()
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
@@ -249,12 +258,12 @@ func tasksSetStatusHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 		}
 	}
 	if !found {
-		return mcp.NewToolResultError(fmt.Sprintf("task %s not found", id)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Not found\nCurrent Tasks:\n%s", formatTasks(tasks))), nil
 	}
 	if err := writeTasks(tasks); err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	return mcp.NewToolResultText("true"), nil
+	return mcp.NewToolResultText(fmt.Sprintf("ID: %s set to %s\nCurrent Tasks:\n%s", id, status, formatTasks(tasks))), nil
 }
 
 func tasksDeleteHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -262,25 +271,34 @@ func tasksDeleteHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.Call
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+	tasksMu.Lock()
+	defer tasksMu.Unlock()
 	tasks, err := readTasks()
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	var filtered []task
 	prefix := id + "."
+	found := false
 	for _, t := range tasks {
 		if t.ID == id || strings.HasPrefix(t.ID, prefix) {
+			found = true
 			continue
 		}
 		filtered = append(filtered, t)
 	}
+	if !found {
+		return mcp.NewToolResultText(fmt.Sprintf("Not found\nCurrent Tasks:\n%s", formatTasks(tasks))), nil
+	}
 	if err := writeTasks(filtered); err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	return mcp.NewToolResultText("true"), nil
+	return mcp.NewToolResultText(fmt.Sprintf("Done\nCurrent Tasks:\n%s", formatTasks(filtered))), nil
 }
 
 func tasksClearHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	tasksMu.Lock()
+	defer tasksMu.Unlock()
 	os.Remove(tasksFilePath())
 	return mcp.NewToolResultText("true"), nil
 }
