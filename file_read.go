@@ -43,7 +43,7 @@ func fileReadHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToo
 	blockSize := 100
 	config := cfg.MergedRead(rootDir)
 	if core, ok := config["core"]; ok {
-		blockSize = cfg.Atoi(core["fread_block_size"], 100)
+		blockSize = cfg.Atoi(core["file_read_block_size"], 100)
 	}
 	if blockSize < 1 {
 		blockSize = 1

@@ -178,7 +178,7 @@ func TestFileReadCustomBlockSize(t *testing.T) {
 
 	cfgDir := cfg.DirPath(rootDir)
 	os.MkdirAll(cfgDir, 0755)
-	os.WriteFile(filepath.Join(cfgDir, "config.ini"), []byte("[core]\nfread_block_size=10\n"), 0644)
+	os.WriteFile(filepath.Join(cfgDir, "config.ini"), []byte("[core]\nfile_read_block_size=10\n"), 0644)
 
 	var buf strings.Builder
 	for i := 0; i < 25; i++ {
@@ -214,7 +214,7 @@ func TestFileReadExactBlockBoundary(t *testing.T) {
 
 	cfgDir := cfg.DirPath(rootDir)
 	os.MkdirAll(cfgDir, 0755)
-	os.WriteFile(filepath.Join(cfgDir, "config.ini"), []byte("[core]\nfread_block_size=3\n"), 0644)
+	os.WriteFile(filepath.Join(cfgDir, "config.ini"), []byte("[core]\nfile_read_block_size=3\n"), 0644)
 
 	os.WriteFile(filepath.Join(rootDir, "exact.txt"), []byte("a\nb\nc\nd\ne\nf"), 0644)
 

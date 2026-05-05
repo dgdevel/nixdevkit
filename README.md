@@ -45,7 +45,7 @@ Recursively walks the root matching the glob pattern. Supports `*` and `**` (glo
 | `path` | File to read |
 | `line_range` | Line range, 1-indexed. Formats: `from:to`, `from-to`, `[from:to]`, `[from-to]`. Also `:to`, `from:`, or a single number for that line to end |
 
-Reads a file and outputs the raw content in blocks, with no transformation (no line numbers, no tab/trailing-space visualization). Output is split into blocks of 100 lines (configurable via `core.fread_block_size`). Each block is preceded by a header:
+Reads a file and outputs the raw content in blocks, with no transformation (no line numbers, no tab/trailing-space visualization). Output is split into blocks of 100 lines (configurable via `core.file_read_block_size`). Each block is preceded by a header:
 
 ```
 ----- $path - lines from X to Y -----
@@ -327,7 +327,7 @@ When set to `true` (or `1` / `yes`), the write tools are hidden from the server:
 - `rm`
 - `mv`
 
-### `core.fread_block_size`
+### `core.file_read_block_size`
 
 Block size (number of lines) for the `file_read` tool. Default is `100`.
 

@@ -30,8 +30,8 @@ func TestEditExactMatch(t *testing.T) {
 	if result.IsError {
 		t.Fatalf("edit returned error: %s", textOf(t, result))
 	}
-	if textOf(t, result) != "ok" {
-		t.Errorf("expected ok, got %q", textOf(t, result))
+	if textOf(t, result) != "done" {
+		t.Errorf("expected done, got %q", textOf(t, result))
 	}
 	data, _ := os.ReadFile(filepath.Join(root, "file1.txt"))
 	if string(data) != "hello\nearth\nfoo\n" {
@@ -61,7 +61,7 @@ func TestEditStartLineOffBy1(t *testing.T) {
 		t.Fatalf("edit returned error: %s", textOf(t, result))
 	}
 	text := textOf(t, result)
-	if text != "ok, start_line_number was wrong, it was 2 instead" {
+	if text != "done, start_line_number was wrong, it was 2 instead" {
 		t.Errorf("expected corrected line msg, got %q", text)
 	}
 	data, _ := os.ReadFile(filepath.Join(root, "file1.txt"))
@@ -92,7 +92,7 @@ func TestEditStartLineOffBy5(t *testing.T) {
 		t.Fatalf("edit returned error: %s", textOf(t, result))
 	}
 	text := textOf(t, result)
-	if text != "ok, start_line_number was wrong, it was 2 instead" {
+	if text != "done, start_line_number was wrong, it was 2 instead" {
 		t.Errorf("expected corrected line msg, got %q", text)
 	}
 	data, _ := os.ReadFile(filepath.Join(root, "file1.txt"))
@@ -201,8 +201,8 @@ func TestEditMultipleMatchesWithCorrectStartLine(t *testing.T) {
 		t.Fatalf("edit returned error: %s", textOf(t, result))
 	}
 	text := textOf(t, result)
-	if text != "ok" {
-		t.Errorf("expected ok, got %q", text)
+	if text != "done" {
+		t.Errorf("expected done, got %q", text)
 	}
 	data, _ := os.ReadFile(filepath.Join(root, "dup.txt"))
 	expected := "bye\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\nhello\n"
@@ -229,8 +229,8 @@ func TestEditMultiLineWindow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if textOf(t, result) != "ok" {
-		t.Errorf("expected ok, got %q", textOf(t, result))
+	if textOf(t, result) != "done" {
+		t.Errorf("expected done, got %q", textOf(t, result))
 	}
 	data, _ := os.ReadFile(filepath.Join(root, "file1.txt"))
 	if string(data) != "hi\nearth\nfoo\n" {
@@ -256,8 +256,8 @@ func TestEditReplaceWithMoreLines(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if textOf(t, result) != "ok" {
-		t.Errorf("expected ok, got %q", textOf(t, result))
+	if textOf(t, result) != "done" {
+		t.Errorf("expected done, got %q", textOf(t, result))
 	}
 	data, _ := os.ReadFile(filepath.Join(root, "file1.txt"))
 	if string(data) != "hello\nearth\nmars\nfoo\n" {
@@ -283,8 +283,8 @@ func TestEditReplaceWithFewerLines(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if textOf(t, result) != "ok" {
-		t.Errorf("expected ok, got %q", textOf(t, result))
+	if textOf(t, result) != "done" {
+		t.Errorf("expected done, got %q", textOf(t, result))
 	}
 	data, _ := os.ReadFile(filepath.Join(root, "file1.txt"))
 	if string(data) != "hi\nfoo\n" {
@@ -310,8 +310,8 @@ func TestEditEmptyModifiedWindow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if textOf(t, result) != "ok" {
-		t.Errorf("expected ok, got %q", textOf(t, result))
+	if textOf(t, result) != "done" {
+		t.Errorf("expected done, got %q", textOf(t, result))
 	}
 	data, _ := os.ReadFile(filepath.Join(root, "file1.txt"))
 	if string(data) != "hello\nfoo\n" {
@@ -360,8 +360,8 @@ func TestEditNestedFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if textOf(t, result) != "ok" {
-		t.Errorf("expected ok, got %q", textOf(t, result))
+	if textOf(t, result) != "done" {
+		t.Errorf("expected done, got %q", textOf(t, result))
 	}
 	data, _ := os.ReadFile(filepath.Join(root, "subdir", "nested.txt"))
 	if string(data) != "hello\nbaz\n" {

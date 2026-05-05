@@ -68,9 +68,9 @@ func editHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 				return mcp.NewToolResultError(maskPath(err.Error())), nil
 			}
 			if actualLine != startLine {
-				return mcp.NewToolResultText(fmt.Sprintf("ok, start_line_number was wrong, it was %d instead", actualLine)), nil
+				return mcp.NewToolResultText(fmt.Sprintf("done, start_line_number was wrong, it was %d instead", actualLine)), nil
 			}
-			return mcp.NewToolResultText("ok"), nil
+			return mcp.NewToolResultText("done"), nil
 		}
 		return mcp.NewToolResultText(fmt.Sprintf("ko: no match (start_line_number %d too far from actual match at %d)", startLine, actualLine)), nil
 	default:
@@ -93,9 +93,9 @@ func editHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 				return mcp.NewToolResultError(maskPath(err.Error())), nil
 			}
 			if actualLine != startLine {
-				return mcp.NewToolResultText(fmt.Sprintf("ok, start_line_number was wrong, it was %d instead", actualLine)), nil
+				return mcp.NewToolResultText(fmt.Sprintf("done, start_line_number was wrong, it was %d instead", actualLine)), nil
 			}
-			return mcp.NewToolResultText("ok"), nil
+			return mcp.NewToolResultText("done"), nil
 		}
 		return mcp.NewToolResultText(fmt.Sprintf("ko: %d matches found, ensure start_line_number is right", len(matches))), nil
 	}
