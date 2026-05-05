@@ -399,7 +399,7 @@ nixdevkit includes an optional code indexer that provides semantic code search u
 ### Setup
 
 ```
-./nixdevkit-setup-indexer [--global] [rootdirectory]
+./nixdevkit-setup [--global] [rootdirectory]
 ```
 
 With `--global`, llama.cpp binaries and models are stored in the global config directory (`$XDG_CONFIG_HOME/nixdevkit/`), and the `[llama]` configuration is written there. This is recommended so that all projects share the same binaries and models. A root directory cannot be specified when using `--global`.
@@ -472,7 +472,7 @@ nixdevkit includes an optional memory subsystem that provides persistent fact st
 The memory subsystem requires the `[llama]` configuration section (shared with the code indexer). Run the indexer setup first:
 
 ```
-./nixdevkit-setup-indexer [--global] [rootdirectory]
+./nixdevkit-setup [--global] [rootdirectory]
 ```
 
 Then start the MCP server with `--enable-memory`:

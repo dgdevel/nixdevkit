@@ -114,7 +114,7 @@ func httpGet(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "nixdevkit-setup-indexer")
+	req.Header.Set("User-Agent", "nixdevkit-setup")
 	return http.DefaultClient.Do(req)
 }
 

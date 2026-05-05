@@ -3,11 +3,11 @@
 compile:
 	go build -o nixdevkit-mcp .
 	go build -o nixdevkit-config ./cmd/nixdevkit-config/
-	go build -o nixdevkit-setup-indexer ./cmd/nixdevkit-setup-indexer/
+	go build -o nixdevkit-setup ./cmd/nixdevkit-setup/
 	CGO_ENABLED=1 go build -o nixdevkit-indexer ./cmd/nixdevkit-indexer/
 
 clean:
-	rm -f nixdevkit-mcp nixdevkit-config nixdevkit-setup-indexer nixdevkit-indexer
+	rm -f nixdevkit-mcp nixdevkit-config nixdevkit-setup nixdevkit-indexer
 
 test:
 	go vet ./...
