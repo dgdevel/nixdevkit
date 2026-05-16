@@ -1,3 +1,5 @@
+NOTICE: The project was merged into [llmdevkit](https://github.com/dgdevel/llmdevkit/).
+
 # nixdevkit
 
 A minimal MCP server exposing Unix-inspired file tools. Designed for low token usage and sandboxed file access.
